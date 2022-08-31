@@ -2,6 +2,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const { ipcRenderer } = require('electron');
     const start = document.querySelector('#start');
 
+    // 发送查询游戏状态的命令
+    ipcRenderer.send('mc_state');
     // 发送打开游戏的命令
     start.onclick = function()
     {
@@ -10,7 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
         var token    = start.getAttribute('token');
         ipcRenderer.send('mc_start', {"username":username,"uuid":uuid,"token":token});
     }
-    // 监听游戏启动状态
+    // 监听游戏状态
     ipcRenderer.on('mc_state',(event,arg)=>{
         const sendEvent = new CustomEvent("mc_state", {detail:arg});
         window.dispatchEvent(sendEvent);

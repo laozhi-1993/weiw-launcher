@@ -21,8 +21,8 @@ const createWindow = () => {
   //mainWindow.openDevTools();     //打开控制台
   
   var state = 0;
-  // 网页加载完毕时发送消息给preload.js
-  mainWindow.webContents.on('did-finish-load', () => {
+  // 监听mc_state事件返回游戏状态码
+  ipcMain.on('mc_state', () => {
     mainWindow.send('mc_state',state);
   });
   // 监听mc_start事件启动游戏
