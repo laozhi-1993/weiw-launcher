@@ -1,6 +1,6 @@
 {
-    "index":"https://m.laozhi.cc:8000/weiw_mc/home.php",
-    "java":"C:\\Users\\laozhi\\AppData\\Roaming\\.minecraft\\cache\\java\\java-runtime-beta\\windows-x64\\java-runtime-beta\\bin\\java.exe",
+    "index":"https://127.0.0.1/",
+    "java":"java",
     "versions":"1.19",
     "xmn":"128",
     "xmx":"4096",
@@ -10,5 +10,5 @@
     "width":"954",
     "height":"580",
     "auth_route":"authlib-injector-1.2.1.jar",
-    "auth_url":"https://m.laozhi.cc:8000/weiw/index_auth.php/"
+    "auth_url":"https://127.0.0.1/weiw/index_auth.php/"
 }
