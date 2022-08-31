@@ -1,0 +1,17 @@
+{
+  "name": "weiw-launcher",
+  "version": "1.0.0",
+  "description": "我的世界专用启动器",
+  "main": "src/index.js",
+  "author": {
+    "name": "laozhi",
+    "email": "1003314741@qq.com"
+  },
+  "scripts": {
+    "start": "chcp 65001 && electron .",
+    "packager": "electron-packager --electron-version=20.1.0 ./ weiw-launcher --win=x32 --out ./OutApp --overwrite --icon=src/favicon.ico --asar"
+  },
+  "devDependencies": {
+    "electron-packager": "^16.0.0"
+  }
+}
