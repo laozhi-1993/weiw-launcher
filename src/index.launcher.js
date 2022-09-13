@@ -1,5 +1,6 @@
 const {spawn,execFile} = require("child_process");
 const https            = require('https');
+const http             = require('http');
 const fs               = require('fs');
 
 
@@ -181,7 +182,8 @@ module.exports = class
         th['primary_jar_name']    = this.versions+'.jar';                                                          //主程序名
 
 
-        https.get(thiss.auth_url, function (res){
+        var cmd = function (res)
+        {
             let rawData = "";
             res.on("data", (chunk) => {
                 rawData += chunk;
@@ -199,7 +201,7 @@ module.exports = class
                 }
                 
                 
-                const c = spawn(thiss.java,JSON.parse(str));
+                var c = spawn(thiss.java,JSON.parse(str));
                 c.stdout.on('data', function (data) {
                     if(success && data.toString().indexOf("Setting user:") != -1)
                     {
@@ -214,8 +216,19 @@ module.exports = class
                     if(exit) exit(exitCode);
                 });
             });
-        }).on('error', function (e){
-            if(output) output('ERROR',e.message);
-        });
+        }
+
+        var error = function (){
+            if(output) output('ERROR',e.message);            
+        }
+
+        if(thiss.auth_url.search('https') === 0)
+        {
+            https.get(thiss.auth_url, cmd).on('error', error);
+        }
+        else
+        {
+            http.get(thiss.auth_url, cmd).on('error', error);
+        }
     }
 }
