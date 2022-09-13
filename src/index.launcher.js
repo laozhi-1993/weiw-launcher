@@ -218,7 +218,7 @@ module.exports = class
             });
         }
 
-        var error = function (){
+        var error = function (e){
             if(output) output('ERROR',e.message);            
         }
 
