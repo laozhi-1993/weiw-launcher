@@ -1,0 +1,18 @@
+{
+    "URL":"https://laozhi.cc",
+    "versions":"1.20",
+    "xmn":"128",
+    "xmx":"4096",
+    "fullscreen": false,
+    "server":"",
+    "port":"25565",
+    "width":"954",
+    "height":"580",
+    "key":[
+         {"key":"ctrl+e","value":"enderchest"},
+         {"key":"ctrl+t","value":"tpaccept"},
+         {"key":"home","value":"home home"},
+         {"key":"ctrl+home","value":"sethome home"},
+         {"key":"ctrl+f","value":"fly"}
+    ]
+}

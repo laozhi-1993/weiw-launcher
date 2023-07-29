@@ -1,0 +1,38 @@
+{
+	"name": "weiw-launcher",
+	"version": "1.0.0",
+	"main": "src/index.js",
+	"author": {
+		"name": "laozhi",
+		"email": "1003314741@qq.com"
+	},
+	"build": {
+		"appId": "cc.laozhi.weiwLauncher",
+		"productName": "weiw-launcher",
+		"asar": true,
+		"files": "!other",
+		"extraFiles": {
+			"from": "other",
+			"to": "."
+		},
+		"nsis": {
+			"oneClick": false,
+			"perMachine": true,
+			"allowToChangeInstallationDirectory": true
+		},
+		"win": {
+			"icon": "src/favicon.ico",
+			"target": "nsis"
+		}
+	},
+	"scripts": {
+		"electron": "npm install electron --save-dev",
+		"electron-builder": "npm install electron-builder --save-dev",
+		"pack": "npx electron-builder build",
+		"start": "chcp 65001 && electron ."
+	},
+	"devDependencies": {
+		"electron": "^25.3.1",
+		"electron-builder": "^24.4.0"
+	}
+}
