@@ -16,7 +16,7 @@ function main()
 		var state = 0;
 		var config = JSON.parse(data);
 		var Minecraft = null;
-		var mainWindow = Window(`${config.URL}/weiw_launcher/login.php`,500,380,true);
+		var mainWindow = Window(`${config.URL}/weiw_launcher/login.php`,500,380,false);
 		
 		
 		app.on('second-instance', () => {
@@ -28,7 +28,7 @@ function main()
 		ipcMain.on('login', (event) => {
 			mainWindow.removeAllListeners('close');
 			mainWindow.close();
-			mainWindow = Window(`${config.URL}/weiw_launcher/login.php`,500,380,true);
+			mainWindow = Window(`${config.URL}/weiw_launcher/login.php`,500,380,false);
 		});
 		
 		
