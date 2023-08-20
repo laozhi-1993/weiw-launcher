@@ -59,9 +59,14 @@ module.exports = class
 			this.cmd.push('-Djava.library.path=${natives_directory}');
 			this.cmd.push('-Dminecraft.launcher.brand=${launcher_name}');
 			this.cmd.push('-Dminecraft.launcher.version=${launcher_version}');
-			this.cmd.push('-cp ${classpath}');
+			this.cmd.push('-cp');
+			this.cmd.push('${classpath}');
 			this.cmd.push(this.json['mainClass']);
-			this.cmd.push(this.json['minecraftArguments']);
+			
+			for(var value of this.json['minecraftArguments'].split(' '))
+			{
+				this.cmd.push(value);
+			}
 		}
 		else
 		{
@@ -223,7 +228,6 @@ module.exports = class
 		get(this.auth_url).catch(exit).then((data) => {
 			this.auth(this.auth_route,this.auth_url,data);
 			this.game();
-			
 			
 			
 			this.process = spawn(this.java,this.cmd.map((value) => {
