@@ -1,6 +1,6 @@
 {
-    "URL":"https://laozhi.cc",
-    "versions":"1.20",
+    "URL":"https://example.com",
+    "versions":"1.20.1",
     "xmn":"128",
     "xmx":"4096",
     "fullscreen": false,
@@ -13,6 +13,7 @@
          {"key":"ctrl+t","value":"tpaccept"},
          {"key":"home","value":"home home"},
          {"key":"ctrl+home","value":"sethome home"},
-         {"key":"ctrl+f","value":"fly"}
-    ]
+         {"key":"ctrl+f","value":"fly"},
+         {"key":"ctrl+b","value":"back"}
+   ]
 }
