@@ -59,23 +59,26 @@ module.exports = function ( setURL, setWidth, setHeight, setResizable )
 	});
 	
 	
-	Window.webContents.on('did-fail-load', () => {
-		if(load_error)
+	Window.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+		if(errorCode !== -3)
 		{
-			Window.removeBrowserView(load_error);
-			load_error.webContents.destroy();
-			load_error = null;
-		}
-			
-		load_error = new BrowserView({
-			webPreferences:{
-				preload: path.join(__dirname, 'window.preload.js')
+			if(load_error)
+			{
+				Window.removeBrowserView(load_error);
+				load_error.webContents.destroy();
+				load_error = null;
 			}
-		});
-		
-		Window.setBrowserView(load_error);
-		load_error.setBounds({ x: 0, y: 0, width: Window.getBounds().width, height: Window.getBounds().height });
-		load_error.webContents.loadFile('src_html/load_error.html');
+				
+			load_error = new BrowserView({
+				webPreferences:{
+					preload: path.join(__dirname, 'window.preload.js')
+				}
+			});
+			
+			Window.setBrowserView(load_error);
+			load_error.setBounds({ x: 0, y: 0, width: Window.getBounds().width, height: Window.getBounds().height });
+			load_error.webContents.loadFile('src_html/load_error.html');
+		}
 	});
 	
 	
