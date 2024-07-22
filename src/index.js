@@ -89,19 +89,27 @@ function main()
 						mainWindow.webContents.send('mc_state',state = 0);
 						mainWindow.restore();
 					}
-					Minecraft = new launcher(path.resolve('.'),path.resolve('java/bin/java.exe'),config.versions,config.xmn,config.xmx);
-					Minecraft.username   = message.username;
-					Minecraft.uuid       = message.uuid;
-					Minecraft.token      = message.token;
-					Minecraft.fullscreen = config.fullscreen;
-					Minecraft.server     = config.server;
-					Minecraft.port       = config.port;
-					Minecraft.width      = config.width;
-					Minecraft.height     = config.height;
-					Minecraft.auth_route = `authlib-injector.jar`;
-					Minecraft.auth_url   = `${config.URL}/weiw/index_auth.php/`;
-					Minecraft.start((data)=>mainWindow.webContents.send('mc_data',data),success,exit);
-					mainWindow.webContents.send('mc_state',state = 1);
+					
+					fs.readdir(".minecraft/versions", (err, files) => {
+						if (err) {
+							throw new Error(`Error reading directory: ${err}`);
+							return;
+						}
+
+						Minecraft = new launcher(path.resolve('.'),path.resolve('java/bin/java.exe'),files[0],config.xmn,config.xmx);
+						Minecraft.username   = message.username;
+						Minecraft.uuid       = message.uuid;
+						Minecraft.token      = message.token;
+						Minecraft.fullscreen = config.fullscreen;
+						Minecraft.server     = config.server;
+						Minecraft.port       = config.port;
+						Minecraft.width      = config.width;
+						Minecraft.height     = config.height;
+						Minecraft.auth_route = `authlib-injector.jar`;
+						Minecraft.auth_url   = `${config.URL}/weiw/index_auth.php/`;
+						Minecraft.start((data)=>mainWindow.webContents.send('mc_data',data),success,exit);
+						mainWindow.webContents.send('mc_state',state = 1);
+					});
 				}
 			}
 		});
