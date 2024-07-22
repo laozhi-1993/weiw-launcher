@@ -1,6 +1,5 @@
 {
     "URL":"https://example.com",
-    "versions":"1.20.1",
     "xmn":"128",
     "xmx":"4096",
     "fullscreen": false,
