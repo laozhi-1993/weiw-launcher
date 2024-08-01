@@ -1,5 +1,5 @@
 {
-    "URL":"https://example.com",
+    "URL":"http://127.0.0.1",
     "xmn":"128",
     "xmx":"4096",
     "fullscreen": false,
