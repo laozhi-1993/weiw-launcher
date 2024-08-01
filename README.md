@@ -3,7 +3,7 @@
 ## 项目简介
 weiw-launcher 客户端是一个基于 [authlib-injector](https://github.com/yushijinhun/authlib-injector) 项目开发的我的世界启动器，实现了类似于原版我的世界的登录认证。
 
-[ui](https://github.com/laozhi-1993/weiw-launcher/blob/main/ui.png)
+![ui](https://github.com/laozhi-1993/weiw-launcher/blob/main/ui.png)
 ## 功能特性
 - **登录认证**：通过 authlib-injector 实现与原版我的世界相同的登录认证体验。
 - **用户界面**：友好的用户界面，方便用户操作。
