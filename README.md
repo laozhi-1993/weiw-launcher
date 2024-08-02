@@ -1,7 +1,7 @@
 # weiw-launcher
 
 ## 项目简介
-weiw-launcher 客户端是一个基于 [authlib-injector](https://github.com/yushijinhun/authlib-injector) 项目开发的我的世界启动器，实现了类似于原版我的世界的登录认证。
+`weiw-launcher` 是一个基于 [authlib-injector](https://github.com/yushijinhun/authlib-injector) 项目开发的 Minecraft 启动器，它与 [weiw-server](https://github.com/laozhi-1993/weiw-server) 服务端组件协同工作，提供了一个完整的 Minecraft 登录和管理解决方案。`weiw-launcher` 实现了类似于原版 Minecraft 的登录认证，并支持与服务端进行配合，实现游戏相关功能。
 
 ![ui](https://github.com/laozhi-1993/weiw-launcher/blob/main/ui.png)
 ## 功能特性
@@ -134,14 +134,8 @@ weiw-launcher 客户端是一个基于 [authlib-injector](https://github.com/yus
    npx electron-builder build
    ```
 
-## 帮助
+## 相关项目
 
-### 常见问题：
-  - **启动器无法启动**：检查 Java JDK 和 authlib-injector 是否正确配置，确保 config.json 文件中的路径和设置正确。
-  - **Minecraft 运行时出现错误**：确保 Minecraft 文件和 JDK 配置无误，检查 config.json 中的内存设置是否适当。
-  - **登录问题**：确保 [weiw-server](https://github.com/laozhi-1993/weiw-server) 服务端正常运行，检查 URL 配置是否正确。
-
-### 联系支持：
-如果你遇到无法解决的问题，可以通过以下途径获取帮助：
-  - **项目 GitHub Issues**：在项目的 [GitHub](https://github.com/laozhi-1993/weiw-launcher/issues) 仓库中报告问题。
-  - **服务端项目 GitHub**：查看和获取服务端的 [weiw-server](https://github.com/laozhi-1993/weiw-server) 项目。
+- [weiw-server](https://github.com/laozhi-1993/weiw-server): `weiw-server` 是 `weiw-launcher` 项目的服务端组件，提供用户认证和游戏相关的服务器功能。
+- [authlib-injector](https://github.com/yushijinhun/authlib-injector): 一个用于 Minecraft 登录认证的库，`weiw-launcher` 使用该库来实现与原版 Minecraft 相同的登录认证体验。
+- [HMCL 启动器](https://github.com/HMCL-dev/HMCL): 用于 Minecraft 的文件补全和启动，配合 `weiw-launcher` 使用以确保游戏文件完整。
