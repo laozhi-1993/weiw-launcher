@@ -1,7 +1,7 @@
 # weiw-launcher
 
 ## 项目简介
-`weiw-launcher` 是一个基于 [authlib-injector](https://github.com/yushijinhun/authlib-injector) 项目开发的 Minecraft 启动器，它与 [weiw-server](https://github.com/laozhi-1993/weiw-server) 服务端组件协同工作，提供了一个完整的 Minecraft 登录和管理解决方案。`weiw-launcher` 实现了类似于原版 Minecraft 的登录认证，并支持与服务端进行配合，实现游戏相关功能。
+`weiw-launcher` 是一个基于 [authlib-injector](https://github.com/yushijinhun/authlib-injector) 项目开发的 Minecraft 启动器，它与 [weiw-server](https://github.com/laozhi-1993/weiw-server) 服务端组件协同工作，提供了一个完整的 Minecraft 登录和管理解决方案。
 
 ![ui](https://github.com/laozhi-1993/weiw-launcher/blob/main/ui.png)
 ## 功能特性
