@@ -1,6 +1,6 @@
 {
 	"name": "weiw-launcher",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"main": "src/index.js",
 	"author": {
 		"name": "laozhi",
@@ -8,7 +8,7 @@
 	},
 	"build": {
 		"appId": "cc.laozhi.weiwLauncher",
-		"productName": "我的世界",
+		"productName": "weiw-launcher",
 		"asar": true,
 		"files": "!other",
 		"extraFiles": {

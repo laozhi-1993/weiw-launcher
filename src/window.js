@@ -37,6 +37,9 @@ module.exports = function ( setURL, setWidth, setHeight, setResizable )
 			Window.setBrowserView(load);
 			load.setBounds({ x: 0, y: 0, width: Window.getContentBounds().width, height: Window.getContentBounds().height });
 			load.webContents.loadFile('src_html/load.html');
+			load.webContents.on('dom-ready', (event,url,isInPlace,isMainFrame) => {
+				if(!setResizable) load.webContents.send('noResize');
+			});
 		}
 		
 		
@@ -78,7 +81,15 @@ module.exports = function ( setURL, setWidth, setHeight, setResizable )
 			Window.setBrowserView(load_error);
 			load_error.setBounds({ x: 0, y: 0, width: Window.getBounds().width, height: Window.getBounds().height });
 			load_error.webContents.loadFile('src_html/load_error.html');
+			load_error.webContents.on('dom-ready', (event,url,isInPlace,isMainFrame) => {
+				if(!setResizable) load_error.webContents.send('noResize');
+			});
 		}
+	});
+	
+	
+	Window.webContents.on('dom-ready', (event,url,isInPlace,isMainFrame) => {
+		if(!setResizable) Window.webContents.send('noResize');
 	});
 	
 	

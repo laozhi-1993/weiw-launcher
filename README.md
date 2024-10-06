@@ -138,4 +138,4 @@
 
 - [weiw-server](https://github.com/laozhi-1993/weiw-server): `weiw-server` 是 `weiw-launcher` 项目的服务端组件，提供用户认证和游戏相关的服务器功能。
 - [authlib-injector](https://github.com/yushijinhun/authlib-injector): 一个用于 Minecraft 登录认证的库，`weiw-launcher` 使用该库来实现与原版 Minecraft 相同的登录认证体验。
-- [HMCL 启动器](https://github.com/HMCL-dev/HMCL): 用于 Minecraft 的文件补全，配合 `weiw-launcher` 使用以确保游戏文件完整。
+- [HMCL 启动器](https://github.com/HMCL-dev/HMCL): 用于 Minecraft 的文件补全和启动，配合 `weiw-launcher` 使用以确保游戏文件完整。

@@ -1,10 +1,7 @@
 const sudo = once();
 const { contextBridge, ipcRenderer } = require('electron');
 	contextBridge.exposeInMainWorld('OpenAPI' ,function (data){ return ipcRenderer.send("open"  ,data) });
-	contextBridge.exposeInMainWorld('start'   ,function (data){ return ipcRenderer.send("start" ,data) });
-	contextBridge.exposeInMainWorld('login'   ,function (data){ return ipcRenderer.send("login")       });
-	contextBridge.exposeInMainWorld('index'   ,function (data){ return ipcRenderer.send("index")       });
-	
+	contextBridge.exposeInMainWorld('start'   ,function (data){ return ipcRenderer.send("start" ,data) });	
 	
 	
 	
@@ -13,6 +10,10 @@ const { contextBridge, ipcRenderer } = require('electron');
     ipcRenderer.on('mc_key'   ,(event,arg)=>{
 		sudo((open) => fetch('/weiw/index.php?mods=mc_sudo&command='+arg.value).then(open).catch(open));
     });
+    ipcRenderer.on('noResize' ,(event,arg)=>{
+		if(id = document.getElementById('maximize')) id.style.display = 'none';
+		if(id = document.getElementById('restore'))  id.style.display = 'none';
+	});
 	
 	
 	function once()
