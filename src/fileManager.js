@@ -55,12 +55,19 @@ module.exports = class
 		let failure = 0;
 		
 		for (const download of downloads) {
-			await fs.access(this.minecraft.getRootDir(download.path)).catch((error) => {
+			try {
+				const stats = await fs.stat(this.minecraft.getRootDir(download.path));
+				const modificationTimeInSeconds = Math.floor(stats.mtime.getTime() / 1000);
+				
+				if (download.time && download.time >= modificationTimeInSeconds) {
+					throw new Error('');
+				}
+			} catch(error) {
 				this.taskManager.start();
 				this.taskManager.operation('下载额外文件');
 				
-				this.taskManager.fileDownloads.add(download.url, this.minecraft.getRootDir(download.path)).then(() => success++).catch(() => failure++);
-			});
+				this.taskManager.fileDownloads.add(download.url, this.minecraft.getRootDir(download.path)).then(() => success++).catch((error) => failure++);
+			}
 		}
 		
 		await this.taskManager.fileDownloads.waitDone();

@@ -136,7 +136,7 @@ module.exports = class
 			this.taskManager.start();
 			this.taskManager.operation('安装forge中请不要关闭此窗口');
 			
-		await this.taskManager.spawn(this.minecraft.getJava(), ['-jar', this.extensionPath, '--installClient', this.minecraft.getRootDir()]).catch((error) => {
+			await this.taskManager.spawn(this.minecraft.getJava(), ['-jar', this.extensionPath, '--installClient', this.minecraft.getRootDir()]).catch((error) => {
 				this.taskManager.operation(`安装forge失败`);
 				this.taskManager.stop();
 			});

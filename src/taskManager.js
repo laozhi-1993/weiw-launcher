@@ -15,10 +15,9 @@ module.exports = class
 		this.isClose = false;
 		
 		
-		this.setURL       = 'src_html/task_manager.html';
-		this.setResizable = false;
-		this.setWidth     = 500;
-		this.setHeight    = 500;
+		this.setURL    = 'src_html/task_manager.html';
+		this.setWidth  = 500;
+		this.setHeight = 600;
     }
 	
 	spawn(command, args) {
@@ -43,7 +42,7 @@ module.exports = class
 	start() {
 		if (this.isStart === false) {
 			this.isStart = true;
-			this.window.readyShow();
+			this.window.show();
 		}
 	}
 	
@@ -55,7 +54,7 @@ module.exports = class
 	{
 		try
 		{
-			this.window = this.mainWindows.windowFile(this.setURL, this.setWidth, this.setHeight, this.setResizable);
+			this.window = this.mainWindows.windowModal(this.setURL, this.setWidth, this.setHeight);
 			this.window.once('close', () => {
 				this.isClose = true;
 				

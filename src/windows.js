@@ -24,6 +24,7 @@ module.exports = class
 		
 		
 		this.all = new Proxy({}, handler);
+		
 		this.mainWindow = this.windowUrl( setURL, setWidth, setHeight, setResizable );
 		this.mainWindow.on('closed', () => {
 			BrowserWindow.getAllWindows().forEach(window => {
@@ -35,7 +36,7 @@ module.exports = class
 	}
 	
 	
-	windowUrl ( setURL, setWidth, setHeight, setResizable )
+	windowUrl( setURL, setWidth, setHeight, setResizable )
 	{
 		const window = new BrowserWindow({
 			width: setWidth,
@@ -110,7 +111,7 @@ module.exports = class
 	}
 	
 	
-	windowFile ( setFile, setWidth, setHeight, setResizable )
+	windowModal( setFile, setWidth, setHeight )
 	{
 		const window = new BrowserWindow({
 			width: setWidth,
@@ -125,14 +126,9 @@ module.exports = class
 		});
 		
 		
-		if(setResizable) {
-			window.setMinimumSize(setWidth, setHeight); //设置窗口最小宽度和高度
-			window.setResizable(true); //设置窗口是否可以调整大小
-		} else {
-			window.setResizable(false); //设置窗口是否可以调整大小
-		}
-		
 		window.loadFile(setFile);
+		window.setResizable(false);
+		
 		window.addEvent = function (name, data)
 		{
 			if(data === undefined) {
@@ -140,10 +136,6 @@ module.exports = class
 			} else {
 				window.webContents.send('addEvent', {'name': name, 'data': data});
 			}
-		}
-		
-		window.readyShow = function () {
-			window.webContents.on('ready-to-show', () => window.show());
 		}
 		
 		return window;
