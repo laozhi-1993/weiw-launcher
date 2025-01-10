@@ -4,12 +4,6 @@
 `weiw-launcher` 是一个基于 [authlib-injector](https://github.com/yushijinhun/authlib-injector) 项目开发的 Minecraft 启动器，它与 [weiw-server](https://github.com/laozhi-1993/weiw-server) 服务端组件协同工作，提供了一个完整的 Minecraft 登录和管理解决方案。
 
 ![ui](https://github.com/laozhi-1993/weiw-launcher/blob/main/ui.png)
-## 功能特性
-- **登录认证**：通过 authlib-injector 实现与原版我的世界相同的登录认证体验。
-- **用户界面**：友好的用户界面，方便用户操作。
-- **皮肤系统**：实现了简单的皮肤更换和使用功能。
-- **金钱系统**：可以编辑 Minecraft 服务器指令让玩家使用金钱购买执行、进行每日签到获取金钱，并使用管理权限进行金钱分配。
-- **RCON 指令执行**：可以使用 RCON 在客户端执行 Minecraft 服务器上的指令。
 
 ## 如何使用
 
@@ -17,55 +11,20 @@
    - 从 [发布页面](https://github.com/laozhi-1993/weiw-launcher/releases) 下载最新的 `weiw-launcher` 客户端版本。
    - 解压下载的文件到你选择的目录。
 
-2. **下载和配置 Java**
-   - 从 [Oracle 官网](https://www.oracle.com/cn/java/technologies/downloads/#jdk22-windows) 下载 Java JDK（建议选择与 Minecraft 兼容的版本，例如 JDK 22）。
-   - 下载完成后，你会得到一个压缩文件（如 `jdk-22.0.2_windows-x64_bin.zip`）。
-   - 解压下载的 Java JDK 文件。你可以使用系统自带的解压工具或第三方解压软件（如 7-Zip 或 WinRAR）来解压。
-   - 解压后，找到解压出来的文件夹，将其重命名为 `java`。例如，将 `jdk-22.0.2` 重命名为 `java`。
-   - 将重命名后的 `java` 文件夹移动到 `weiw-launcher` 客户端目录中。
-
-3. **下载或配置 authlib-injector**
-   - 从 [authlib-injector 发布页面](https://github.com/yushijinhun/authlib-injector/releases) 下载 `authlib-injector`。
-   - 解压下载的 `authlib-injector` 文件（如果是压缩文件），然后将其重命名为 `authlib-injector`（不带版本号）。
-   - 将重命名后的 `authlib-injector` 文件夹移动到 `weiw-launcher` 客户端目录中。
-
-4. **配置启动器**
+2. **配置启动器**
    - 打开启动器目录，找到并编辑 `config.json` 文件。
    - 配置文件示例：
      ```json
      {
        "URL": "http://127.0.0.1",  // 替换为 weiw-server 服务端的 IP 地址
-       "xmn": "128",  // Minecraft 启动时分配的最小内存（MB）
-       "xmx": "4096", // Minecraft 启动时分配的最大内存（MB）
-       "fullscreen": false, // 设置启动时是否全屏：true 为全屏，false 为窗口模式
-       "server": "",  // 启动后自动连接的服务器地址（高版本中无效）
-       "port": "25565",  // 启动后自动连接的服务器端口（高版本中无效）
        "width": "954",  // 窗口模式下启动游戏时的窗口宽度（像素）
-       "height": "580", // 窗口模式下启动游戏时的窗口高度（像素）
-       "key": [
-         {"key": "ctrl+e", "value": "enderchest"},
-         {"key": "ctrl+t", "value": "tpaccept"},
-         {"key": "home", "value": "home home"},
-         {"key": "ctrl+home", "value": "sethome home"},
-         {"key": "ctrl+f", "value": "fly"},
-         {"key": "ctrl+b", "value": "back"}
-       ]
+       "height": "580"  // 窗口模式下启动游戏时的窗口高度（像素）
      }
      ```
    - 将 `"URL"` 字段中的 `http://127.0.0.1` 替换为你的 weiw-server 服务端的实际 IP 地址。
-   - 根据需要调整 `xmn` 和 `xmx` 以设置 Minecraft 启动时分配的最小和最大内存（单位为 MB）。默认情况下，`xmn` 是最小内存，`xmx` 是最大内存。
-   - 将 `"fullscreen"` 设置为 `true` 以全屏模式启动 Minecraft，或设置为 `false` 以窗口模式启动。
    - 如果选择窗口模式，`"width"` 和 `"height"` 字段用于设置游戏窗口的宽度和高度（单位为像素）。
-   - **快捷键配置**：`"key"` 字段定义了快捷键与 Minecraft 指令的映射。请注意，使用这些快捷键需要服务器支持 `sudo` 指令。例如：
-     - `"ctrl+e"` 映射到 `enderchest` 指令
-     - `"home"` 映射到 `home home` 指令
 
-5. **进行 Minecraft 文件补全**
-   - 使用附带的 [HMCL 启动器](https://github.com/HMCL-dev/HMCL) 进行 Minecraft 的补全操作。这一步将下载并配置所需的 Minecraft 文件。
-   - 启动 HMCL 启动器，并选择所需的 Minecraft 版本进行启动和补全操作。
-   - 将补全后的 `.minecraft` 文件夹移动到 `weiw-launcher` 客户端目录中。
-
-6. **启动客户端**
+3. **启动客户端**
    - 双击 `weiw-launcher.exe` 以启动客户端。
    - 登录或注册。
 
@@ -101,9 +60,6 @@
    - 如果下载的是压缩文件（如 `.zip`），请使用系统自带的解压工具或第三方解压软件（如 7-Zip 或 WinRAR）将其解压到你选择的目录。
 
 3. **准备和移动文件**
-   - **Java 文件夹**：将准备好的 `java` 文件夹移动到解压后的源码目录中的 `other` 文件夹内。
-   - **.minecraft 文件夹**：将生成的 `.minecraft` 文件夹移动到解压后的源码目录中的 `other` 文件夹内。
-   - **authlib-injector.jar 文件**：将下载或使用附带的 `authlib-injector.jar` 文件移动到解压后的源码目录中的 `other` 文件夹内。
    - **config.json 文件**：编辑 `other` 文件夹内的 `config.json` 文件。
 
 4. **打开 CMD 窗口并导航到源码目录**
@@ -138,4 +94,3 @@
 
 - [weiw-server](https://github.com/laozhi-1993/weiw-server): `weiw-server` 是 `weiw-launcher` 项目的服务端组件，提供用户认证和游戏相关的服务器功能。
 - [authlib-injector](https://github.com/yushijinhun/authlib-injector): 一个用于 Minecraft 登录认证的库，`weiw-launcher` 使用该库来实现与原版 Minecraft 相同的登录认证体验。
-- [HMCL 启动器](https://github.com/HMCL-dev/HMCL): 用于 Minecraft 的文件补全和启动，配合 `weiw-launcher` 使用以确保游戏文件完整。
