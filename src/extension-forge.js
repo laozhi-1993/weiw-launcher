@@ -1,17 +1,17 @@
 const AdmZip = require('adm-zip');
 const path   = require('path');
 const fs     = require('fs');
+const { downloadFiles, downloadFile, install } = load('taskManager');
+
 
 module.exports = class
 {
-    constructor(taskManager, minecraft, extension)
+    constructor(minecraft, extension)
 	{
-		this.taskManager = taskManager;
-		this.minecraft   = minecraft;
-		
+		this.downloads     = [];
+		this.minecraft     = minecraft;
 		this.extensionUrl  = extension;
 		this.extensionPath = this.minecraft.getRootDir(path.basename(extension));
-		this.downloads     = [];
     }
 	
 	
@@ -25,17 +25,17 @@ module.exports = class
 		if (installProfileEntry) {
 			this.installProfileJson = JSON.parse(installProfileEntry.getData().toString());
 		} else {
-			throw new Error('未找到 install_profile.json 文件！');
+			throw('未找到 install_profile.json 文件！');
 		}
 		
 		if (versionEntry) {
 			this.versionJson = JSON.parse(versionEntry.getData().toString());
 		} else {
-			throw new Error('未找到 version.json 文件！');
+			throw('未找到 version.json 文件！');
 		}
 		
 		if (this.minecraft.getVersion() !== this.installProfileJson.minecraft) {
-			throw new Error('我的世界版本与forge版本不匹配');
+			throw('我的世界版本与forge版本不匹配');
 		}
 		
 		
@@ -72,7 +72,8 @@ module.exports = class
 	}
 	
 	
-	checkInstallation() {
+	checkInstallation()
+	{
 		try {
 			const profilesPath = this.minecraft.getRootDir('launcher_profiles.json');
 			const launcherProfiles = JSON.parse(fs.readFileSync(profilesPath, 'utf8'));
@@ -99,47 +100,24 @@ module.exports = class
 	}
 	
 	
-	async setup() {
-		if (!fs.existsSync(this.extensionPath)) {
-			this.taskManager.start();
-			this.taskManager.operation('下载forge安装程序');
-			
-			await this.taskManager.fileDownloads.add(this.extensionUrl, this.extensionPath).catch((error) => {
-				this.taskManager.operation(`安装程序下载失败`);
-				this.taskManager.stop();
-			});
+	async setup(taskWindow)
+	{
+		if (!fs.existsSync(this.extensionPath))
+		{
+			await downloadFile(taskWindow, this.extensionUrl, '下载forge安装程序', '下载失败', f => f.saveToFile(this.extensionPath));
 		}
 		
 		this.initializeProperties();
 		this.initializeLibraries();
 		
 		const checkInstallation = this.checkInstallation();
-		let success = 0;
-		let failure = 0;
 		
-		for (const download of this.downloads) {
-			if (!fs.existsSync(download.path)) {
-				this.taskManager.start();
-				this.taskManager.operation('下载forge依赖库');
-				
-				this.taskManager.fileDownloads.add(download.url, download.path).then(() => success++).catch(() => failure++);
-			}
-		}
+		await downloadFiles(taskWindow, this.downloads, '下载forge依赖库');
 		
-		await this.taskManager.fileDownloads.waitDone();
-		if (failure) {
-			this.taskManager.operation(`有 ${failure} 个文件下载失败请重新尝试下载`);
-			this.taskManager.stop();
-		}
 		
-		if (checkInstallation) {
-			this.taskManager.start();
-			this.taskManager.operation('安装forge中请不要关闭此窗口');
-			
-			await this.taskManager.spawn(this.minecraft.getJava(), ['-jar', this.extensionPath, '--installClient', this.minecraft.getRootDir()]).catch((error) => {
-				this.taskManager.operation(`安装forge失败`);
-				this.taskManager.stop();
-			});
+		if (checkInstallation)
+		{
+			await install(taskWindow, this.minecraft.getJava(), ['-jar', this.extensionPath, '--installClient', this.minecraft.getRootDir()], '安装forge中请稍等', '安装失败');
 		}
 	}
 }

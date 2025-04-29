@@ -1,6 +1,7 @@
 const path = require('path');
 const fs   = require('fs');
 
+
 module.exports = class
 {
     constructor(version, rootDir)
@@ -10,15 +11,17 @@ module.exports = class
 		this.classPaths = [];
 		this.natives    = [];
 		
-		
         this.userName    = 'laozhi';
         this.uuid        = 'be2c077954673b69865a1633750d0eaa';
         this.accessToken = 'be2c077954673b69865a1633750d0eaa';
 		
 		
+		this.authUrl    = null;
+		this.authPath   = null;
 		this.mainClass  = null;
 		this.assetIndex = null;
 		this.arguments  = {'game': [], 'jvm': []};
+		this.java       = 'java';
 		
 		
 		this.librariesDir    = path.join(rootDir, 'libraries');
@@ -221,6 +224,14 @@ module.exports = class
 		this.accessToken = accessToken;
 	}
 	
+	setAuthUrl(authUrl) {
+		this.authUrl = authUrl;
+	}
+	
+	setAuthPath(authPath) {
+		this.authPath = authPath;
+	}
+	
 	
 	getSeparator()   { return ';'              }
 	getUserName()    { return this.userName    }
@@ -236,6 +247,9 @@ module.exports = class
 	
 	getVersionJarPath()  { return this.versionJarPath  }
 	getVersionJsonPath() { return this.versionJsonPath }
+	
+	getAuthUrl()  { return this.authUrl  }
+	getAuthPath() { return this.authPath }
 	
 	getRootDir()      { return this.resolvePath(this.rootDir,      ...arguments) }
 	getLibrariesDir() { return this.resolvePath(this.librariesDir, ...arguments) }

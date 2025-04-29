@@ -1,12 +1,13 @@
 const path = require('path');
 const fs   = require('fs/promises');
+const { downloadFiles, downloadFile } = load('taskManager');
+
 
 module.exports = class
 {
-	constructor(taskManager, minecraft)
+	constructor(minecraft)
 	{
-		this.taskManager = taskManager;
-		this.minecraft   = minecraft;
+		this.minecraft = minecraft;
 	}
 	
 	async clearUnwantedMods(mods)
@@ -29,30 +30,20 @@ module.exports = class
 		} catch (err) {}
 	}
 	
-	async downloadAuthModule(authModuleUrl)
+	async downloadAuth(taskWindow, authUrl)
 	{
-		this.minecraft.authModulePath = this.minecraft.getRootDir(path.basename(authModuleUrl));
-		this.minecraft.getAuthModulePath = () => {
-			return this.minecraft.authModulePath;
-		}
+		this.minecraft.setAuthPath(this.minecraft.getRootDir(path.basename(authUrl)));
 		
 		try {
-			await fs.access(this.minecraft.getAuthModulePath());
+			await fs.access(this.minecraft.getAuthPath());
 		} catch (error) {
-			this.taskManager.start();
-			this.taskManager.operation('下载认证组件');
-			
-			await this.taskManager.fileDownloads.add(authModuleUrl, this.minecraft.getAuthModulePath()).catch((error) => {
-				this.taskManager.operation('下载认证组件失败');
-				this.taskManager.stop();
-			});
+			await downloadFile(taskWindow, authUrl, '下载认证模块', '下载认证模块失败', f => f.saveToFile(this.minecraft.getAuthPath()));
 		}
 	}
 	
-	async downloadAdditionalFiles(downloads)
+	async downloadFiles(taskWindow, downloads)
 	{
-		let success = 0;
-		let failure = 0;
+		const extraFiles = [];
 		
 		for (const download of downloads) {
 			try {
@@ -63,17 +54,10 @@ module.exports = class
 					throw new Error('');
 				}
 			} catch(error) {
-				this.taskManager.start();
-				this.taskManager.operation('下载额外文件');
-				
-				this.taskManager.fileDownloads.add(download.url, this.minecraft.getRootDir(download.path)).then(() => success++).catch((error) => failure++);
+				extraFiles.push({'url': download.url, 'path': this.minecraft.getRootDir(download.path)});
 			}
 		}
 		
-		await this.taskManager.fileDownloads.waitDone();
-		if (failure) {
-			this.taskManager.operation(`有 ${failure} 个文件下载失败请重新尝试下载`);
-			this.taskManager.stop();
-		}
+		await downloadFiles(taskWindow, extraFiles, '下载额外文件');
 	}
 }

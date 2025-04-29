@@ -3,6 +3,7 @@ const path   = require("path");
 const fs     = require("fs");
 const AdmZip = require("adm-zip");
 
+
 module.exports = class
 {
     constructor(minecraft)

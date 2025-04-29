@@ -1,45 +1,9 @@
 {
-	"name": "weiw-launcher",
-	"version": "1.1.0",
-	"main": "src/index.js",
-	"build": {
-		"appId": "com.github.laozhi1993.weiw-launcher",
-		"productName": "weiw-launcher",
-		"asar": true,
-		"files": "!other",
-		"electronLanguages": [
-			"en-US",
-			"zh-CN"
-		],
-		"extraFiles": {
-			"from": "other",
-			"to": "."
-		},
-		"nsis": {
-			"oneClick": false,
-			"deleteAppDataOnUninstall": true,
-			"allowToChangeInstallationDirectory": true
-		},
-		"win": {
-			"icon": "favicon.ico",
-			"target": [
-				"nsis",
-				"zip"
-			]
-		}
-	},
-	"scripts": {
-		"electron": "npm install electron --save-dev",
-		"electron-builder": "npm install electron-builder --save-dev",
-		"pack": "npx electron-builder build",
-		"start": "chcp 65001 && electron ."
-	},
-	"devDependencies": {
-		"electron": "^32.2.4",
-		"electron-builder": "^25.1.8"
-	},
-	"dependencies": {
-		"adm-zip": "^0.5.16",
-		"winreg": "^1.2.5"
-	}
+  "name": "weiw-test",
+  "version": "1.0.1",
+  "main": "src/index.js",
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "winreg": "^1.2.5"
+  }
 }

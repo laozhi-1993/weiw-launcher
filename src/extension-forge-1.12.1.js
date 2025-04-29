@@ -2,17 +2,17 @@ const AdmZip = require('adm-zip');
 const path   = require('path');
 const fs     = require('fs');
 const myUrl  = require('url');
+const { downloadFiles, downloadFile } = load('taskManager');
+
 
 module.exports = class
 {
-    constructor(taskManager, minecraft, extension)
+    constructor(minecraft, extension)
 	{
-		this.taskManager = taskManager;
-		this.minecraft   = minecraft;
-		
+		this.downloads     = [];
+		this.minecraft     = minecraft;
 		this.extensionUrl  = extension;
 		this.extensionPath = this.minecraft.getRootDir(path.basename(extension));
-		this.downloads     = [];
     }
 	
 	
@@ -25,11 +25,11 @@ module.exports = class
 		if (installProfileEntry) {
 			this.installProfileJson = JSON.parse(installProfileEntry.getData().toString());
 		} else {
-			throw new Error('未找到 install_profile.json 文件！');
+			throw('未找到 install_profile.json 文件！');
 		}
 		
 		if (!this.installProfileJson.install || this.minecraft.getVersion() !== this.installProfileJson.install.minecraft) {
-			throw new Error('我的世界版本与forge版本不匹配');
+			throw('我的世界版本与forge版本不匹配');
 		}
 		
 		
@@ -39,7 +39,8 @@ module.exports = class
 	
     initializeLibraries()
 	{
-		for (const librarie of this.installProfileJson.versionInfo.libraries) {
+		for (const librarie of this.installProfileJson.versionInfo.libraries)
+		{
 			let url = librarie.url || 'https://libraries.minecraft.net/';
 			let filePath = false;
 			
@@ -57,36 +58,16 @@ module.exports = class
 	}
 	
 	
-	async setup() {
-		if (!fs.existsSync(this.extensionPath)) {
-			this.taskManager.start();
-			this.taskManager.operation('下载forge安装程序');
-			
-			await this.taskManager.fileDownloads.add(this.extensionUrl, this.extensionPath).catch((error) => {
-				this.taskManager.operation(`安装程序下载失败`);
-				this.taskManager.stop();
-			});
+	async setup(taskWindow)
+	{
+		if (!fs.existsSync(this.extensionPath))
+		{
+			await downloadFile(taskWindow, this.extensionUrl, '下载forge安装程序', '下载失败', f => f.saveToFile(this.extensionPath));
 		}
 		
 		this.initializeProperties();
 		this.initializeLibraries();
 		
-		let success = 0;
-		let failure = 0;
-		
-		for (const download of this.downloads) {
-			if (!fs.existsSync(download.path)) {
-				this.taskManager.start();
-				this.taskManager.operation('下载forge依赖库');
-				
-				this.taskManager.fileDownloads.add(download.url, download.path).then(() => success++).catch(() => failure++);
-			}
-		}
-		
-		await this.taskManager.fileDownloads.waitDone();
-		if (failure) {
-			this.taskManager.operation(`有 ${failure} 个文件下载失败请重新尝试下载`);
-			this.taskManager.stop();
-		}
+		await downloadFiles(taskWindow, this.downloads, '下载forge依赖库');
 	}
 }

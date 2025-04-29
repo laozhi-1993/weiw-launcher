@@ -1,93 +1,105 @@
-const { spawn } = require('child_process');
-const path      = require('path');
-const fileDownloads = require(path.join(__dirname, "fileDownloads.js"));
+const { spawn }  = require('child_process');
+const path       = require('path');
+const fs         = require('fs');
+const { FileDownloads, FileDownload, Speed } = load('httpSeries');
 
-module.exports = class
+
+async function downloadFiles(taskWindow, downloads, title, threadCount = 20)
 {
-    constructor(mainWindows, downloadCount = 20)
+	const speed = new Speed((size) => taskWindow.addEvent('speed', size));
+	const fileDownloads = new FileDownloads(threadCount);
+	
+	const stop = function()
 	{
-		this.mainWindows   = mainWindows;
-		this.downloadCount = downloadCount;
-		this.results       = [];
-		
-		
-		this.isStart = false;
-		this.isClose = false;
-		
-		
-		this.setURL    = 'src_html/task_manager.html';
-		this.setWidth  = 500;
-		this.setHeight = 600;
-    }
-	
-	spawn(command, args) {
-		return new Promise((resolve, reject) => {
-			const result = spawn(command, args);
-			
-			result.stdout.on('data', ( data ) => this.window.addEvent('spawn', data.toString()));
-			result.stderr.on('data', ( data ) => this.window.addEvent('spawn', data.toString()));
-			
-			result.on('exit', (code) => {
-				if (code === 0) {
-					resolve(code);
-				} else {
-					reject(code);
-				}
-			});
-			
-			this.results.push(result);
-		});
+		speed.stop();
+		fileDownloads.stop();
 	}
 	
-	start() {
-		if (this.isStart === false) {
-			this.isStart = true;
-			this.window.show();
-		}
+	fileDownloads.on('progress', (total, complete) => {
+		taskWindow.addEvent('progress', {'total': total, 'complete': complete});
+	});
+	
+	fileDownloads.on('start', (id, fileName) => {
+		taskWindow.addEvent('downloadStart', {'id': id, 'fileName': fileName});
+	});
+	
+	fileDownloads.on('data', (id, totalBytes, downloadedBytes) => {
+		taskWindow.addEvent('downloadProgress', {'id': id, 'totalBytes': totalBytes, 'downloadedBytes': downloadedBytes});
+	});
+	
+	
+	for (const download of downloads) {
+		fs.existsSync(download.path) || fileDownloads.add(download.url, download.path);
 	}
 	
-	operation(data) {
-		this.isClose || this.window.addEvent('operation', data);
-	}
-	
-	async run(onStart)
+	if (fileDownloads.total)
 	{
-		try
-		{
-			this.window = this.mainWindows.windowModal(this.setURL, this.setWidth, this.setHeight);
-			this.window.once('close', () => {
-				this.isClose = true;
-				
-				this.fileDownloads.abort();
-				this.results.forEach(func => func.kill());		
-			});
-			
-			
-			this.fileDownloads = new fileDownloads(this.downloadCount);
-			this.fileDownloads.on((downloadQueue) => this.window.addEvent('downloadQueue', downloadQueue));
-			this.fileDownloads.onSpeed((speed) => this.window.addEvent('speed', speed));
-			
-			
-			this.stop = () => {
-				throw new Error('stop');
-			};
-			
-			throw await Promise.resolve(onStart(this));
-		}
-		catch (error)
-		{
-			if (error instanceof Error) {
-				if (error.message === 'stop') {
-					this.isStart || this.window.close();
-				} else {
-					this.window.close();
-				}
-				
-				throw error;
-			} else {
-				this.window.close();
-				return error;
-			}
-		}
+		await taskWindow.start('src_html/task_downloadFiles.html');
+		
+		taskWindow.addEvent('operation', title);
+		taskWindow.once('hide', stop);
+	}
+	
+	try
+	{
+		await fileDownloads.start(speed).then(stop);
+	}
+	catch(t)
+	{
+		throw(`有 ${t.failure} 个文件下载失败请重新尝试下载`);
 	}
 }
+
+async function downloadFile(taskWindow, url, title, failure, callback)
+{
+	const speed = new Speed((size) => taskWindow.addEvent('speed', size));
+	const fileDownload = new FileDownload(url);
+	
+	const stop = function()
+	{
+		speed.stop();
+		fileDownload.stop();
+	}
+	
+	
+	await taskWindow.start('src_html/task_downloadFile.html');
+	
+	taskWindow.addEvent('operation', title);
+	taskWindow.once('hide', stop);
+	
+	try
+	{
+		await fileDownload.start(speed, (total, complete) => taskWindow.addEvent('progress', {'total': total, 'complete': complete})).then(callback).then(stop);
+	}
+	catch(error)
+	{
+		throw(failure);
+	}
+}
+
+function install(taskWindow, command, args, title, failure)
+{
+	return new Promise(async (resolve, reject) => {
+		await taskWindow.start('src_html/task_install.html');
+		
+		taskWindow.addEvent('operation', title);
+		taskWindow.once('hide', () => result.kill());
+		
+		
+		const result = spawn(command, args);
+		
+		result.on('exit', (code) => {
+			if (code === 0) {
+				resolve(code);
+			} else {
+				reject(failure);
+			}
+		});
+		
+		result.stdout.on('data', ( data ) => taskWindow.addEvent('install', data.toString()));
+		result.stderr.on('data', ( data ) => taskWindow.addEvent('install', data.toString()));
+	});
+}
+
+
+module.exports = {downloadFiles, downloadFile, install};

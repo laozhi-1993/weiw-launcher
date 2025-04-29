@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
-	contextBridge.exposeInMainWorld('windowApi', function (data){ return ipcRenderer.send("windowApi", data) });
-	contextBridge.exposeInMainWorld('openApi',   function (data){ return ipcRenderer.send("openApi",   data) });
-	contextBridge.exposeInMainWorld('start',     function (data){ return ipcRenderer.send("start",     data) });	
+	contextBridge.exposeInMainWorld('windowApi', function (...args){ return ipcRenderer.send("windowApi", args) });
+	contextBridge.exposeInMainWorld('openApi',   function (...args){ return ipcRenderer.send("openApi",   args) });
+	contextBridge.exposeInMainWorld('start',     function (...args){ return ipcRenderer.send("start",     args) });	
 	
 	
 	ipcRenderer.on('addEvent', (event, arg) => {
@@ -48,4 +48,6 @@ window.addEventListener('DOMContentLoaded', function() {
 	if(id = document.getElementById('close'))    id.addEventListener('click', function(){ ipcRenderer.send("close")    });
 	if(id = document.getElementById('restore'))  id.addEventListener('click', function(){ ipcRenderer.send("restore")  });
 	if(id = document.getElementById('reload'))   id.addEventListener('click', function(){ ipcRenderer.send("reload")   });
+	if(id = document.getElementById('show'))     id.addEventListener('click', function(){ ipcRenderer.send("show")     });
+	if(id = document.getElementById('hide'))     id.addEventListener('click', function(){ ipcRenderer.send("hide")     });
 });

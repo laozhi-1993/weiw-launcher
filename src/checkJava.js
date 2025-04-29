@@ -3,13 +3,11 @@ const registry          = require('winreg');
 const fs                = require('fs');
 const path              = require('path');
 
+
 module.exports = class
 {
-    constructor(taskManager, minecraft)
+    constructor()
 	{
-		this.taskManager = taskManager;
-		this.minecraft   = minecraft;
-		
 		this.javaUrl  = 'https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe';
 		this.java8Url = 'https://www.java.com/zh-CN/download/';
     }
@@ -72,7 +70,7 @@ module.exports = class
 	}
 	
 	showMessage(message, url) {
-		const result = dialog.showMessageBoxSync(this.taskManager.mainWindows.mainWindow, {
+		const result = dialog.showMessageBoxSync({
 			type: 'question',
 			buttons: ['关闭', '打开'],
 			title: '系统中未找到java虚拟机！',
@@ -82,22 +80,23 @@ module.exports = class
 		if (result === 1) {
 			shell.openExternal(url);
 		}
+		
+		
+		throw null;
 	}
 	
-	async checkJavaVersion() {
-		if (this.minecraft.versionCompare('1.17', '>=')) {
-			this.minecraft.setJava(await this.getJavaHome());
+	async checkJavaVersion(minecraft) {
+		if (minecraft.versionCompare('1.17', '>=')) {
+			minecraft.setJava(await this.getJavaHome());
 			
-			if (!this.minecraft.getJava()) {
+			if (!minecraft.getJava()) {
 				this.showMessage(`当前我的世界版本需要java17或更高才可以运行，是否打开 ${this.javaUrl} 地址进行下载？`, this.javaUrl);
-				this.taskManager.stop();
 			}
 		} else {
-			this.minecraft.setJava(await this.getJava8Home());
+			minecraft.setJava(await this.getJava8Home());
 			
-			if (!this.minecraft.getJava()) {
+			if (!minecraft.getJava()) {
 				this.showMessage(`当前我的世界版本需要java8才可以运行，是否打开 ${this.java8Url} 地址进行下载？`, this.java8Url);
-				this.taskManager.stop();
 			}
 		}
 	}

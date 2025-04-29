@@ -1,17 +1,12 @@
 const { app, ipcMain, shell, dialog } = require('electron');
 const path  = require('path');
 const fs    = require('fs');
-const myUrl = require('url');
 
-const Windows     = require(path.join(__dirname, "windows.js"));
-const TaskManager = require(path.join(__dirname, "taskManager.js"));
-const CheckJava   = require(path.join(__dirname, "checkJava.js"));
-const FileManager = require(path.join(__dirname, "fileManager.js"));
 
-const Minecraft         = require(path.join(__dirname, "minecraft.js"));
-const MinecraftGame     = require(path.join(__dirname, "minecraftGame.js"));
-const MinecraftLauncher = require(path.join(__dirname, "minecraftLauncher.js"));
-
+	global.load = function (name)
+	{
+		return require(path.join(__dirname, name));
+	}
 
 	if(app.requestSingleInstanceLock()) {
 		app.on('ready', main);
@@ -20,97 +15,125 @@ const MinecraftLauncher = require(path.join(__dirname, "minecraftLauncher.js"));
 	}
 
 
+const { closeAll, window, taskWindow } = load('windows');
+const CheckJava         = load('checkJava');
+const FileManager       = load('fileManager');
+const Minecraft         = load('minecraft');
+const MinecraftGame     = load('minecraftGame');
+const MinecraftLauncher = load('minecraftLauncher');
+
+
 function main()
 {
-	global.config = JSON.parse(fs.readFileSync('config.json','utf-8'));
-	global.mainWindows = new Windows(myUrl.resolve(config.URL, '/launcher/login.php'), 1100, 750, true);
+	const config = JSON.parse(fs.readFileSync('config.json','utf-8'));
+	const mainWindow = window(config.URL+'/launcher/login.php', 1100, 800, true);
+	const mainTaskWindow = taskWindow(500, 600, mainWindow);
 	
 	
 	app.on('second-instance', () => {
-		mainWindows.all.isMinimized() && mainWindows.all.restore();
-		mainWindows.all.focus();
+		mainWindow.isMinimized() && mainWindow.restore();
+		mainWindow.focus();
 	});
 	
-	mainWindows.mainWindow.webContents.on('dom-ready', () => {
+	
+	mainWindow.once('closed', () => {
+		closeAll();
+	});
+	
+	mainWindow.webContents.on('did-frame-finish-load', () => {
 		if (minecraftLauncher) {
-			mainWindows.all.addEvent('start');
+			mainWindow.addEvent('start');
 		} else {
-			mainWindows.all.addEvent('exit');
+			mainWindow.addEvent('exit');
 		}
+		
+		mainWindow.addEvent('version', app.getVersion());
 	});
 	
 	
-	let taskManager       = null;
-	let minecraft         = null;
+	let minecraft = null;
 	let minecraftLauncher = null;
 	
 	
 	ipcMain.on('windowApi', (event, message) => {
-		mainWindows.windowUrl(...message);
+		window(...message);
 	});
 	
 	
 	ipcMain.on('openApi', (event, message) => {
-		shell.openExternal(message);
+		shell.openExternal(...message);
 	});
 	
 	
-	ipcMain.on('start', (event, message) => {
+	ipcMain.on('start', async (event, message) => {
 		if (minecraftLauncher) {
-			minecraftLauncher.kill();
+			return minecraftLauncher.kill();
+		}
+		
+		if (minecraft) {
 			return;
 		}
 		
-		if (taskManager) {
-			return;
+		
+		minecraft = new Minecraft(message[0].version, path.resolve('.minecraft'));
+		minecraft.setAuthUrl(config.URL+'/weiw/index_auth.php/');
+		minecraft.setUserName(message[0].username);
+		minecraft.setUuid(message[0].uuid);
+		minecraft.setAccessToken(message[0].accessToken);
+		
+		
+		try
+		{
+			const checkJava = new CheckJava();
+			await checkJava.checkJavaVersion(minecraft);
+			
+			
+			const fileManager = new FileManager(minecraft);
+			await fileManager.clearUnwantedMods(message[0].mods);
+			await fileManager.downloadFiles(mainTaskWindow, message[0].downloads);
+			await fileManager.downloadAuth(mainTaskWindow, message[0].authModule);
+			
+			
+			const minecraftGame = new MinecraftGame(minecraft);
+			await minecraftGame.setup(mainTaskWindow);
+			await minecraftGame.extension(mainTaskWindow, message[0].extensionType, message[0].extensionValue);
+		}
+		catch(error)
+		{
+			minecraft = null;
+			minecraftLauncher = null;
+			
+			return mainTaskWindow.error(error);
 		}
 		
-		
-		taskManager = new TaskManager(mainWindows);
-		taskManager.run(async (taskManager) => {
-			minecraft = new Minecraft(message.version, path.resolve('.minecraft'));
-			minecraft.setUserName(message.username);
-			minecraft.setUuid(message.uuid);
-			minecraft.setAccessToken(message.accessToken);
-			
-			
-			const checkJava = new CheckJava(taskManager, minecraft);
-			await checkJava.checkJavaVersion();
-			
-			
-			const fileManager = new FileManager(taskManager, minecraft);
-			await fileManager.downloadAdditionalFiles(message.downloads);
-			await fileManager.downloadAuthModule(message.authModule);
-			await fileManager.clearUnwantedMods(message.mods);
-			
-			
-			const minecraftGame = new MinecraftGame(taskManager, minecraft);
-			await minecraftGame.setup();
-			await minecraftGame.loadExtension(message.extensionType, message.extensionValue);
-		}).then(() => {
-			mainWindows.mainWindow.addEvent('start');
+		mainTaskWindow.hide();
+		mainTaskWindow.waiting().then(() => {
+			mainWindow.addEvent('start');
 			
 			minecraftLauncher = new MinecraftLauncher(minecraft);
 			minecraftLauncher.setSize(config.width, config.height);
-			minecraftLauncher.setJVM(message.jvm);
-			minecraftLauncher.setAddress(message.quickPlayAddress);
-			minecraftLauncher.setAuth(minecraft.getAuthModulePath(), myUrl.resolve(config.URL, '/weiw/index_auth.php/'));
+			minecraftLauncher.setJVM(message[0].jvm);
+			minecraftLauncher.setAddress(message[0].quickPlayAddress);
+			minecraftLauncher.setAuth(minecraft.getAuthPath(), minecraft.getAuthUrl());
 			
 			minecraftLauncher.start(function (data) {
 				if (data === 'show') {
-					mainWindows.all.minimize();
+					mainWindow.minimize();
 				}
 				
-				if (data === 'exit') {
-					taskManager = null;
+				if (data === 'exit')
+				{
+					minecraft = null;
 					minecraftLauncher = null;
 					
-					mainWindows.mainWindow.addEvent('exit');
-					mainWindows.all.restore();
+					mainWindow.addEvent('exit');
+					mainWindow.isMinimized() && mainWindow.restore();
+					mainWindow.focus();
 				}
 				
-				if (data === 'exitError') {
-					const result = dialog.showMessageBoxSync(mainWindows.mainWindow, {
+				if (data === 'exitError')
+				{
+					const result = dialog.showMessageBoxSync(mainWindow, {
 						type: 'question',
 						title: '游戏异常退出！',
 						buttons: ['关闭', '打开'],
@@ -122,17 +145,6 @@ function main()
 					}
 				}
 			});
-		}).catch((error) => {
-			if (error.message !== 'stop') {
-				dialog.showMessageBoxSync(mainWindows.mainWindow, {
-					type: 'error',
-					title: '出错了！',
-					message: error.stack,
-				});
-			}
-			
-			taskManager = null;
-			minecraftLauncher = null;
 		});
 	});
 }
