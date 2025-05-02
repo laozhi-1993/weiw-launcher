@@ -102,8 +102,8 @@ function taskWindow( setWidth, setHeight, mainWindow )
 		}
 	});
 	
-	window.on('hide', () => window.loadURL('about:blank'));
 	window.loadURL('about:blank');
+	window.on('hide', () => window.loadURL('about:blank'));
 	
 	
 	window.addEvent = function(name, data)
@@ -140,7 +140,7 @@ function taskWindow( setWidth, setHeight, mainWindow )
 		}
 		else
 		{
-			if (!window.isVisible())
+			if (error === 'stop')
 			{
 				return;
 			}
