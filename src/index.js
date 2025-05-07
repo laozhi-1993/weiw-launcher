@@ -16,6 +16,7 @@ const fs    = require('fs');
 
 
 const { closeAll, window, taskWindow } = load('windows');
+const broadcastAddress  = load('broadcastAddress');
 const CheckJava         = load('checkJava');
 const FileManager       = load('fileManager');
 const Minecraft         = load('minecraft');
@@ -110,10 +111,18 @@ function main()
 		mainTaskWindow.waiting().then(() => {
 			mainWindow.addEvent('start');
 			
+			let baClose;
+			
+			if (message[0].address !== '') {
+				const [address, port] = message[0].address.split(':');
+				baClose = broadcastAddress('§e我的世界服务器', address, port ?? 25565);
+			}
+			
+			
 			minecraftLauncher = new MinecraftLauncher(minecraft);
 			minecraftLauncher.setSize(config.width, config.height);
 			minecraftLauncher.setJVM(message[0].jvm);
-			minecraftLauncher.setAddress(message[0].quickPlayAddress);
+			//minecraftLauncher.setAddress(message[0].address);
 			minecraftLauncher.setAuth(minecraft.getAuthPath(), minecraft.getAuthUrl());
 			
 			minecraftLauncher.start(function (data) {
@@ -126,6 +135,7 @@ function main()
 					minecraft = null;
 					minecraftLauncher = null;
 					
+					baClose && baClose();
 					mainWindow.addEvent('exit');
 					mainWindow.isMinimized() && mainWindow.restore();
 					mainWindow.focus();

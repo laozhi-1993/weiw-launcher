@@ -98,19 +98,19 @@ module.exports = class
 		this.cmd.push('--height');
 		this.cmd.push('${resolution_height}');
 		
-		if(this.server != "")
+		if(this.server)
 		{
 			if (this.minecraft.versionCompare('1.20', '>=')) {
 				this.cmd.push('--quickPlayMultiplayer');
 				this.cmd.push(this.server);
 			} else {
 				const [address, port] = this.server.split(':');
-				const finalPort = port ? port : '25565';
+				
 				
 				this.cmd.push('--server');
 				this.cmd.push(address);
 				this.cmd.push('--port');
-				this.cmd.push(finalPort);
+				this.cmd.push(port ?? 25565);
 			}
 		}
 	}
