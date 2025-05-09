@@ -174,7 +174,7 @@ module.exports = class
 		this.extractNatives();
 		
 		this.error = `"${this.minecraft.getJava()}" ${this.cmd.join(' ')}\n`;
-		this.process = spawn(this.minecraft.getJava(), this.cmd);
+		this.process = spawn(this.minecraft.getJava(), this.cmd, {cwd: this.minecraft.getRootDir()});
 		
 		
 		this.process.stdout.on('data', (data) => {
