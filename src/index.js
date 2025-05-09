@@ -76,7 +76,7 @@ function main()
 		}
 		
 		
-		minecraft = new Minecraft(message[0].version, path.resolve('.minecraft'));
+		minecraft = new Minecraft(message[0].version, path.resolve(message[0].name));
 		minecraft.setAuthUrl(config.URL+'/weiw/index_auth.php/');
 		minecraft.setUserName(message[0].username);
 		minecraft.setUuid(message[0].uuid);
