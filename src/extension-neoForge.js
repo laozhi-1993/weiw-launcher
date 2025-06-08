@@ -67,35 +67,6 @@ module.exports = class
 	}
 	
 	
-	checkInstallation()
-	{
-		try {
-			const profilesPath = this.minecraft.getRootDir('launcher_profiles.json');
-			const launcherProfiles = JSON.parse(fs.readFileSync(profilesPath, 'utf8'));
-			
-			for (const download of this.downloads) {
-				if (!fs.existsSync(download.path)) {
-					if (launcherProfiles.profiles.neoforge || launcherProfiles.profiles.NeoForge) {
-						delete launcherProfiles.profiles.neoforge;
-						delete launcherProfiles.profiles.NeoForge;
-						fs.writeFileSync(profilesPath, JSON.stringify(launcherProfiles, null, 4));
-					}
-					
-					return true;
-				}
-			}
-			
-			if (launcherProfiles.profiles.neoforge || launcherProfiles.profiles.NeoForge) {
-				return false;
-			}
-			
-			return true;
-		} catch (error) {
-			return true;
-		}
-	}
-	
-	
 	updateJvmClassPaths()
 	{
 		this.minecraft.getArguments().jvm = this.minecraft.getArguments().jvm.map((jvm) => {
@@ -114,10 +85,61 @@ module.exports = class
 	}
 	
 	
+	async install(taskWindow)
+	{
+		const getLibraryFiles = () => {
+			const librariesDir = this.minecraft.getLibrariesDir();
+			const files = [];
+			
+			const processDirectory = (currentDir, relativePath = "") => {
+				const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+				
+				for (const entry of entries) {
+					const itemRelativePath = path.posix.join(relativePath, entry.name);
+					const fullPath = path.join(currentDir, entry.name);
+					
+					if (entry.isDirectory()) {
+						processDirectory(fullPath, itemRelativePath);
+					} else {
+						files.push(itemRelativePath);
+					}
+				}
+				
+				return files;
+			};
+			
+			
+			return processDirectory(librariesDir);
+		};
+		
+		const getJsonPath = () => {
+			const parsed = path.parse(this.extensionPath);
+			
+			return path.format({
+				dir: parsed.dir,
+				name: parsed.name,
+				ext: '.json'
+			});
+		};
+		
+		
+		try {
+			const json = JSON.parse(fs.readFileSync(getJsonPath(), 'utf8'));
+			
+			for (const librarie of json.libraries) {
+				fs.statSync(this.minecraft.getLibrariesDir(librarie)).isFile();
+			}
+		} catch {
+			await install(taskWindow, this.minecraft.getJava(), this.extensionPath, this.minecraft.getRootDir(), '安装neoforge中请稍等', '安装失败').then(() => {
+				fs.writeFileSync(getJsonPath(), JSON.stringify({ 'libraries': getLibraryFiles() }, null, 4));
+			});
+		}
+	}
+	
+	
 	async setup(taskWindow)
 	{
-		if (!fs.existsSync(this.extensionPath))
-		{
+		if (!fs.existsSync(this.extensionPath)) {
 			await downloadFile(taskWindow, this.extensionUrl, '下载neoforge安装程序', '安装程序下载失败', f => f.saveToFile(this.extensionPath));
 		}
 		
@@ -125,13 +147,7 @@ module.exports = class
 		this.initializeLibraries();
 		this.updateJvmClassPaths();
 		
-		const checkInstallation = this.checkInstallation();
-		
 		await downloadFiles(taskWindow, this.downloads, '下载neoforge依赖库');
-		
-		if (checkInstallation)
-		{
-			await install(taskWindow, this.minecraft.getJava(), ['-jar', this.extensionPath, '--installClient', this.minecraft.getRootDir()], '安装neoforge中请稍等', '安装失败');
-		}
+		await this.install(taskWindow);
 	}
 }

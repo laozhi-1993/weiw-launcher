@@ -19,8 +19,7 @@ module.exports = class
 		this.versionJsonUrl = `https://meta.fabricmc.net/v2/versions/loader/${this.minecraft.version}/${this.fabricVersion}/profile/json`;
 		this.versionJsonPath = this.minecraft.getRootDir('versions', this.fabricId, `${this.fabricId}.json`);
 		
-		if (!fs.existsSync(this.versionJsonPath))
-		{
+		if (!fs.existsSync(this.versionJsonPath)) {
 			await downloadFile(taskWindow, this.versionJsonUrl, '获取fabric元数据', '获取失败', f => f.saveToFile(this.versionJsonPath));
 		}
 		

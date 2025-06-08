@@ -60,8 +60,7 @@ module.exports = class
 	
 	async setup(taskWindow)
 	{
-		if (!fs.existsSync(this.extensionPath))
-		{
+		if (!fs.existsSync(this.extensionPath)) {
 			await downloadFile(taskWindow, this.extensionUrl, '下载forge安装程序', '下载失败', f => f.saveToFile(this.extensionPath));
 		}
 		

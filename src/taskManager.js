@@ -80,7 +80,7 @@ function downloadFile(taskWindow, url, title, failure, callback)
 	});
 }
 
-function install(taskWindow, command, args, title, failure)
+function install(taskWindow, java, installer, rootDir, title, failure)
 {
 	return new Promise(async (resolve, reject) => {
 		await taskWindow.start('src_html/task_install.html');
@@ -92,7 +92,7 @@ function install(taskWindow, command, args, title, failure)
 		});
 		
 		
-		const result = spawn(command, args);
+		const result = spawn(java, [ '-jar', installer, '--installClient', '.' ], {cwd: rootDir});
 		
 		result.on('exit', (code) => {
 			if (code === 0) {
