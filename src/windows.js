@@ -2,10 +2,8 @@ const { BrowserWindow, BrowserView, ipcMain, dialog } = require('electron');
 const path = require('path');
 
 
-function closeAll()
-{
-	for(const window of BrowserWindow.getAllWindows())
-	{
+function closeAll() {
+	for(const window of BrowserWindow.getAllWindows()) {
 		window.close();
 	}
 }
@@ -45,18 +43,18 @@ function window( setURL, setWidth, setHeight, setResizable )
 	
 	window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
 		if (isMainFrame) {
-			view.webContents.loadFile('src_html/load.html');
+			view.webContents.loadFile('html/load.html');
 			window.setBrowserView(view);
 		}
 	});
 	window.webContents.on('did-fail-load', (event, errorCode) => {
 		if (errorCode !== -3) {
-			view.webContents.loadFile('src_html/load_error.html');
+			view.webContents.loadFile('html/load_error.html');
 		}
 	});
 	window.webContents.on('did-navigate', (event, url, httpResponseCode, httpStatusText) => {
 		window.webContents.once('did-finish-load', () => {
-			if (httpResponseCode === 404) view.webContents.loadFile('src_html/load_404.html');
+			if (httpResponseCode === 404) view.webContents.loadFile('html/load_404.html');
 			if (httpResponseCode === 200) window.removeBrowserView(view);
 		});
 	});
@@ -115,17 +113,33 @@ function taskWindow( setWidth, setHeight, mainWindow )
 		}
 	}
 	
-	window.waiting = function()
-	{
-		return new Promise((resolve) => window.isVisible() ? window.once('hide', resolve) : resolve());
-	}
-	
-	window.start = function(setFile)
+	window.start = function(setFile, callback)
 	{
 		window.loadFile(setFile);
 		window.show();
 		
-		return new Promise((resolve) => window.webContents.once('dom-ready', resolve));
+		const domReady = new Promise((resolve) => {
+			window.webContents.once('dom-ready', resolve);
+		});
+		
+		return domReady.then(() => {
+			let returnValue;
+			
+			const task = new Promise((resolve, reject) => {
+				try {
+					returnValue = callback(resolve, reject);
+				} catch (error) {
+					reject(error);
+				}
+				
+				window.once('hide', () => {
+					reject('stop');
+				});
+			});
+			
+			task.finally(returnValue);
+			return task;
+		});
 	}
 	
 	window.error = function(error)
@@ -157,7 +171,11 @@ function taskWindow( setWidth, setHeight, mainWindow )
 }
 
 
-module.exports = {closeAll, window, taskWindow};
+	module.exports = {
+		window,
+		closeAll,
+		taskWindow,
+	};
 
 
 ipcMain.on('isResizable' ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.isResizable()  });

@@ -275,5 +275,85 @@ class Speed
 	}
 }
 
+function taskDownloads(task, downloads, title, threadCount = 20)
+{
+	let list = [];
+	
+	for(const value of downloads) {
+		if (!list.some(item => item.path === value.path)) {
+			if(!fs.existsSync(value.path)) {
+				list.push(value);
+			}
+		}
+	}
+	
+	if (list.length !== 0)
+	{
+		return task.start('html/task_downloadFiles.html', (resolve, reject) => {
+			
+			task.addEvent('operation', title);
+			
+			const speed = new Speed((size) => task.addEvent('speed', size));
+			const fileDownloads = new FileDownloads(threadCount);
+			
+			
+			fileDownloads.on('progress', (total, complete) => {
+				task.addEvent('progress', {'total': total, 'complete': complete});
+			});
+			
+			fileDownloads.on('start', (id, fileName) => {
+				task.addEvent('downloadStart', {'id': id, 'fileName': fileName});
+			});
+			
+			fileDownloads.on('data', (id, totalBytes, downloadedBytes) => {
+				task.addEvent('downloadProgress', {'id': id, 'totalBytes': totalBytes, 'downloadedBytes': downloadedBytes});
+			});
+			
+			
+			
+			for (const value of list) {
+				fileDownloads.add(value.url, value.path);
+			}
+			
+			fileDownloads.start(speed)
+				.then(() => resolve())
+				.catch(() => reject(`有 ${fileDownloads.failure} 个文件下载失败请重新尝试下载`));
+			
+			return function() {
+				speed.stop();
+				fileDownloads.stop();
+			};
+		});
+	}
+}
 
-module.exports = {FileDownloads, FileDownload, Speed};
+function taskDownload(task, url, title, failure, callback)
+{
+	return task.start('html/task_downloadFile.html', (resolve, reject) => {
+		
+		task.addEvent('operation', title);
+		
+		const speed = new Speed((size) => task.addEvent('speed', size));
+		const fileDownload = new FileDownload(url);
+		
+		
+		fileDownload.start(speed, (total, complete) => task.addEvent('progress', {'total': total, 'complete': complete}))
+			.then(callback)
+			.then(() => resolve())
+			.catch(() => reject(failure));
+		
+		return function() {
+			speed.stop();
+			fileDownload.stop();
+		}
+	});
+}
+
+
+	module.exports = {
+		FileDownloads,
+		FileDownload,
+		Speed,
+		taskDownloads,
+		taskDownload,
+	};

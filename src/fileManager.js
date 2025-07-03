@@ -1,12 +1,11 @@
 const path = require('path');
 const fs   = require('fs/promises');
-const { downloadFiles, downloadFile } = load('taskManager');
+const { taskDownloads, taskDownload } = load('httpSeries');
 
 
 module.exports = class
 {
-	constructor(minecraft)
-	{
+	constructor(minecraft) {
 		this.minecraft = minecraft;
 	}
 	
@@ -27,21 +26,10 @@ module.exports = class
 					await fs.unlink(filePath);
 				}
 			}
-		} catch (err) {}
+		} catch {}
 	}
 	
-	async downloadAuth(taskWindow, authUrl)
-	{
-		this.minecraft.setAuthPath(this.minecraft.getRootDir(path.basename(authUrl)));
-		
-		try {
-			await fs.access(this.minecraft.getAuthPath());
-		} catch (error) {
-			await downloadFile(taskWindow, authUrl, '下载认证模块', '下载认证模块失败', f => f.saveToFile(this.minecraft.getAuthPath()));
-		}
-	}
-	
-	async downloadFiles(taskWindow, downloads)
+	async downloadFiles(task, downloads)
 	{
 		const extraFiles = [];
 		
@@ -58,6 +46,6 @@ module.exports = class
 			}
 		}
 		
-		await downloadFiles(taskWindow, extraFiles, '下载额外文件');
+		await taskDownloads(task, extraFiles, '下载额外文件');
 	}
 }

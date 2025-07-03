@@ -1,90 +1,310 @@
-const path = require('path');
-const fs   = require('fs');
+const path   = require('path');
+const fs     = require('fs');
+const AdmZip = require("adm-zip");
 
 
 module.exports = class
 {
-    constructor(version, rootDir)
+    constructor(rootDir)
 	{
-        this.version    = version;
-        this.rootDir    = rootDir;
-		this.classPaths = [];
-		this.natives    = [];
-		
-        this.userName    = 'laozhi';
-        this.uuid        = 'be2c077954673b69865a1633750d0eaa';
-        this.accessToken = 'be2c077954673b69865a1633750d0eaa';
+        this._rootDir = rootDir;
 		
 		
-		this.authUrl    = null;
-		this.authPath   = null;
-		this.mainClass  = null;
-		this.assetIndex = null;
-		this.arguments  = {'game': [], 'jvm': []};
-		this.java       = 'java';
+		this.jvm       = new module.exports.Jvm(this);
+		this.game      = new module.exports.Game(this);
+		this.libraries = new module.exports.Libraries(this);
+		this.natives   = new module.exports.natives(this);
 		
 		
-		this.librariesDir    = path.join(rootDir, 'libraries');
-		this.assetsDir       = path.join(rootDir, 'assets');
-		this.versionDir      = path.join(rootDir, 'versions', this.version);
-		this.nativesDir      = path.join(rootDir, 'versions', this.version, 'natives-windows-x86_64');
-		this.versionJarPath  = path.join(rootDir, 'versions', this.version, `${this.version}.jar`);
-		this.versionJsonPath = path.join(rootDir, 'versions', this.version, `${this.version}.json`);
+		this._launcherName    = null;
+		this._launcherVersion = null;
+		this._java            = null;
+        this._version         = null;
+        this._uuid            = null;
+        this._userName        = null;
+        this._accessToken     = null;
+		this._assetIndex      = null;
+		this._mainClass       = null;
+		
+		
+		this._versionsDir  = this.getRootDir('versions');
+		this._assetsDir    = this.getRootDir('assets');
+		this._librariesDir = this.getRootDir('libraries');
 	}
 	
-	static parseVersion(versionString) {
-		const basename = path.basename(versionString).toLowerCase();
-		const parts = basename.split('-');
-		
-		if (parts[0] && parts[1] && parts[2]) {
-			return {
-				versionString: versionString,
-				version: parts[1],
-				loaderType: parts[0],
-				loaderVersion: parts[2],
-			};
+	
+	
+	static Jvm = class
+	{
+		constructor(parent) {
+			this._parent = parent;
+			this._data = [];
 		}
 		
-		return {
-			versionString: versionString,
-			version: versionString,
-			loaderType: null,
-			loaderVersion: null,
-		};
+		parent() {
+			return this._parent;
+		}
+		
+		get() {
+			return this._data;
+		}
+		
+		set(value) {
+			this._data = value;
+			return this;
+		}
+		
+		add(value) {
+			this._data.push(value);
+			return this;
+		}
+		
+		
+		auth(route,url,prefetched)
+		{
+			this.add('-javaagent:'+route+'='+url);
+			if(prefetched) {
+				this.add('-Dauthlibinjector.yggdrasil.prefetched='+Buffer.from(prefetched).toString('base64'));
+			}
+			
+			return this;
+		}
 	}
 	
-	isActionAllowed(rules, osName)
+	static Game = class
 	{
-		let allowed = false;
+		constructor(parent) {
+			this._parent = parent;
+			this._data = [];
+		}
 		
-		for (const rule of rules)
+		parent() {
+			return this._parent;
+		}
+		
+		get() {
+			return this._data;
+		}
+		
+		set(value) {
+			this._data = value;
+			return this;
+		}
+		
+		add(value) {
+			this._data.push(value);
+			return this;
+		}
+		
+		
+		fullscreen() {
+			this.add('--fullscreen');
+			return this;
+		}
+		
+		size(width, height)
 		{
-			if (rule.os)
-			{
-				if (rule.os.name === osName)
-				{
-					if (rule.action === "allow")    return true;
-					if (rule.action === "disallow") return false;
+			this.add('--width');
+			this.add(width);
+			this.add('--height');
+			this.add(height);
+			
+			return this;
+		}
+		
+		address(address)
+		{
+			if (this.parent().versionCompare('1.20', '>=')) {
+				this.add('--quickPlayMultiplayer');
+				this.add(address);
+			} else {
+				const [server, port] = address.split(':');
+				
+				
+				this.add('--server');
+				this.add(server);
+				this.add('--port');
+				this.add(port ?? 25565);
+			}
+			
+			return this;
+		}
+	}
+	
+	static Libraries = class
+	{
+		constructor(parent) {
+			this._parent = parent;
+			this._data = [];
+		}
+		
+		parent() {
+			return this._parent;
+		}
+		
+		get() {
+			return this._data;
+		}
+		
+		set(value) {
+			this._data = value;
+			return this;
+		}
+		
+		add(value) {
+			this._data.push(value);
+			return this;
+		}
+		
+		
+		getString() {
+			const newArror = this.get().map(item => {
+				return this.parent().resolvePath('${library_directory}', item);
+			});
+			
+			return newArror.concat(this.parent().getVersionJarPath()).join('${classpath_separator}');
+		}
+		
+		addPath(mavenPath)
+		{
+			const DirectoryA = path.dirname(path.dirname(mavenPath));
+			const DirectoryB = path.dirname(mavenPath);
+			
+			
+			const newArror = this.get().filter((item) => {
+				const A = path.dirname(path.dirname(item));
+				const B = path.dirname(item);
+				
+				if (item === mavenPath) {
+					return false;
 				}
 				
-				continue;
-			}
+				if (DirectoryB === B) {
+					return true;
+				}
+				
+				if (DirectoryA === A) {
+					return false;
+				}
+				
+				return true;
+			});
 			
-			if (rule.action === "allow")
-			{
-				allowed = true;
-				continue;
-			}
 			
-			if (rule.action === "disallow")
-			{
-				allowed = false;
-				continue;
-			}
+			return this.set([...newArror, mavenPath]);
+		}
+	}
+	
+	static natives = class
+	{
+		constructor(parent) {
+			this._parent = parent;
+			this._data = [];
 		}
 		
-		return allowed;
+		parent() {
+			return this._parent;
+		}
+		
+		get() {
+			return this._data;
+		}
+		
+		set(value) {
+			this._data = value;
+			return this;
+		}
+		
+		add(value) {
+			this._data.push(value);
+			return this;
+		}
+		
+		
+		extract() {
+			for (const native of this.get()) {
+				const nativePath = this.parent().getLibrariesDir(native);
+				
+				if (fs.existsSync(nativePath)) {
+					const zip = new AdmZip(nativePath);
+					zip.extractAllTo(this.parent().getNativesDir(), false);
+				}
+			}
+			
+			return this;
+		}
 	}
+	
+	static Args = class
+	{
+		constructor(parent) {
+			this._parent = parent;
+			this._data = [];
+		}
+		
+		parent() {
+			return this._parent;
+		}
+		
+		get() {
+			return this._data;
+		}
+		
+		set(value) {
+			this._data = value;
+			return this;
+		}
+		
+		add(value) {
+			this._data.push(value);
+			return this;
+		}
+		
+		
+		interpolate(search,replace) {
+			this.get().forEach((item, index, Arror) => {
+				Arror[index] = String(item).split(search).join(replace);
+			});
+			
+			return this;
+		}
+		
+		getCommand() {
+			const args = [this.parent().java(), ...this.get()];
+			
+			args.forEach((item, index, Arror) => {
+				if (item.includes(' ')) {
+					Arror[index] = '"'+item+'"';
+				}
+			});
+			
+			return args.join(' ');
+		}
+	}
+	
+	
+	
+	mavenToPath(name)
+	{
+		const [gav, extension] = name.split('@');
+		const [groupId, ...tail] = gav.split(':');
+		
+		const filename = tail.join('-')+'.'+(extension ?? 'jar');
+		const paths = groupId.split('.');
+		
+		paths.push(tail[0]);
+		paths.push(tail[1]);
+		paths.push(filename);
+		
+		
+		return paths.join('/');
+	}
+	
+	resolvePath() {
+		return path.join(...arguments).replace(/\\/g, '/');
+	}
+	
+	
 	
 	versionCompare(version, operator = '==')
 	{
@@ -93,7 +313,7 @@ module.exports = class
 			return version.split('.').map((v) => parseInt(v, 10) || 0);
 		};
 
-		const v1Parts = parseVersion(this.version);
+		const v1Parts = parseVersion(this.version());
 		const v2Parts = parseVersion(version);
 
 		const maxLength = Math.max(v1Parts.length, v2Parts.length);
@@ -123,137 +343,162 @@ module.exports = class
 		throw new Error(`无效的操作符: ${operator}`);
 	}
 	
-	generateJarPath(name, filename)
+	launchArgs()
 	{
-		const [firstElement, ...otherElements] = name.split(':');
-		const pathArray = firstElement.split('.');
+		const args = new module.exports.Args(this);
 		
-		pathArray.push(otherElements[0]);
-		pathArray.push(otherElements[1]);
-		pathArray.push(filename || otherElements.join('-')+'.jar');
-		
-		
-		return pathArray.join('/');
-	}
-	
-	resolvePath(dir, ...subPaths) {
-		if (subPaths.length === 0) {
-			return dir;
+		for(const value of this.jvm.get()) {
+			args.add(value);
 		}
 		
-		return path.join(dir, ...subPaths);
-	}
-	
-	classPathsToString() {
-		return this.classPaths.concat(this.versionJarPath).join('${classpath_separator}');
-	}
-	
-	setClassPath(classPath) {
-		const classPathDir     = path.dirname (path.dirname(classPath));
-		const classPathVersion = path.basename(path.dirname(classPath));
-
-		// 提前检查 classPath 是否已经存在于 this.classPaths 中
-		if (this.classPaths.includes(classPath)) {
-			return;
+		args.add(this.mainClass());
+		
+		for(const value of this.game.get()) {
+			args.add(value);
 		}
-
-		for (let index = 0; index < this.classPaths.length; index++) {
-			const value = this.classPaths[index];
-			const classPathsDir = path.dirname(path.dirname(value));
-			const classPathsVersion = path.basename(path.dirname(value));
-
-			// 只需比较目录和版本，如果目录相同且版本不同，更新路径
-			if (classPathsDir === classPathDir && classPathVersion !== classPathsVersion) {
-				this.classPaths[index] = classPath;
-				return; // 更新完毕后直接退出
-			}
+		
+		
+		args.interpolate('${classpath}',           this.libraries.getString()); //依赖库
+		args.interpolate('${classpath_separator}', this.getSeparator());        //依赖库分隔符
+		args.interpolate('${primary_jar_name}',    this.getMainJarName());      //主程序名
+		args.interpolate('${version_name}',        this.version());             //游戏版本
+		args.interpolate('${game_directory}',      this.getRootDir());          //游戏目录
+		args.interpolate('${library_directory}',   this.getLibrariesDir());     //libraries目录路径
+		args.interpolate('${natives_directory}',   this.getNativesDir());       //natives目录路径
+		args.interpolate('${assets_root}',         this.getAssetsDir());        //游戏资源目录
+		args.interpolate('${assets_index_name}',   this.assetIndex());          //游戏资源版本
+		
+		args.interpolate('${version_type}',     this.launcherName());    //启动器名字
+		args.interpolate('${launcher_name}',    this.launcherName());    //启动器名字
+		args.interpolate('${launcher_version}', this.launcherVersion()); //启动器版本号
+		
+		args.interpolate('${auth_player_name}',  this.userName());    //玩家名字
+		args.interpolate('${auth_uuid}',         this.uuid());        //玩家UUID
+		args.interpolate('${auth_access_token}', this.accessToken()); //玩家令牌
+		args.interpolate('${auth_session}',      this.accessToken()); //玩家令牌
+		
+		args.interpolate('${user_properties}', '{}'); //用户属性
+		args.interpolate('${user_type}', 'msa');      //用户类型
+		
+		return args;
+	}
+	
+	
+	
+	launcherName(value) {
+		if (value) {
+			this._launcherName = value;
+			return this;
 		}
-
-		// 如果没有找到合适的路径，直接添加 classPath
-		this.classPaths.push(classPath);
+		
+		return this._launcherName;
 	}
 	
-	setNative(native) {
-		this.natives.push(native);
-	}
-	
-	setArguments(args) {
-		if (args) {
-			if (typeof args === 'string') {
-				this.arguments = args;
-			} else {
-				args.game && this.arguments.game.push(...args.game);
-				args.jvm && this.arguments.jvm.push(...args.jvm);
-			}
+	launcherVersion(value) {
+		if (value) {
+			this._launcherVersion = value;
+			return this;
 		}
+		
+		return this._launcherVersion;
 	}
 	
-	setClassPaths(classPaths) {
-		this.classPaths = classPaths;
+	java(value) {
+		if (value) {
+			this._java = value;
+			return this;
+		}
+		
+		return this._java;
 	}
 	
-	setMainClass(mainClass) {
-		this.mainClass = mainClass;
+	version(value) {
+		if (value) {
+			this._version = value;
+			return this;
+		}
+		
+		return this._version;
 	}
 	
-	setVersionJson(versionJson) {
-		this.versionJson = versionJson;
+	uuid(value) {
+		if (value) {
+			this._uuid = value;
+			return this;
+		}
+		
+		return this._uuid;
 	}
 	
-	setAssetsJson(assetsJson) {
-		this.assetsJson = assetsJson;
+	userName(value) {
+		if (value) {
+			this._userName = value;
+			return this;
+		}
+		
+		return this._userName;
 	}
 	
-	setAssetIndex(assetIndex) {
-		this.assetIndex = assetIndex;
+	accessToken(value) {
+		if (value) {
+			this._accessToken = value;
+			return this;
+		}
+		
+		return this._accessToken;
 	}
 	
-	setJava(java) {
-		this.java = java;
+	mainClass(value) {
+		if (value) {
+			this._mainClass = value;
+			return this;
+		}
+		
+		return this._mainClass;
 	}
 	
-	setUserName(userName) {
-		this.userName = userName;
-	}
-	
-	setUuid(uuid) {
-		this.uuid = uuid;
-	}
-	
-	setAccessToken(accessToken) {
-		this.accessToken = accessToken;
-	}
-	
-	setAuthUrl(authUrl) {
-		this.authUrl = authUrl;
-	}
-	
-	setAuthPath(authPath) {
-		this.authPath = authPath;
+	assetIndex(value) {
+		if (value) {
+			this._assetIndex = value;
+			return this;
+		}
+		
+		return this._assetIndex;
 	}
 	
 	
-	getSeparator()   { return ';'              }
-	getUserName()    { return this.userName    }
-	getUuid()        { return this.uuid        }
-	getAccessToken() { return this.accessToken }
-	getJava()        { return this.java        }
-	getVersion()     { return this.version     }
-	getClassPaths()  { return this.classPaths  }
-	getNatives()     { return this.natives     }
-	getMainClass()   { return this.mainClass   }
-	getArguments()   { return this.arguments   }
-	getAssetIndex()  { return this.assetIndex  }
 	
-	getVersionJarPath()  { return this.versionJarPath  }
-	getVersionJsonPath() { return this.versionJsonPath }
+	setVersionsDir(value) {
+		this._versionsDir = value;
+		return this;
+	}
+	setAssetsDir(value) {
+		this._assetsDir = value;
+		return this;
+	}
+	setLibrariesDir(value) {
+		this._librariesDir = value;
+		return this;
+	}
 	
-	getAuthUrl()  { return this.authUrl  }
-	getAuthPath() { return this.authPath }
+	getSeparator() {
+		return path.delimiter;
+	}
+	getMainJarName() {
+		return path.basename(this.getVersionJarPath());
+	}
+	getNativesDir() {
+		return this.getVersionsDir(this.version(), 'natives', ...arguments);
+	}
+	getVersionJarPath() {
+		return this.getVersionsDir(this.version(), `${this.version()}.jar`);
+	}
+	getVersionJsonPath() {
+		return this.getVersionsDir(this.version(), `${this.version()}.json`);
+	}
 	
-	getRootDir()      { return this.resolvePath(this.rootDir,      ...arguments) }
-	getLibrariesDir() { return this.resolvePath(this.librariesDir, ...arguments) }
-	getAssetsDir()    { return this.resolvePath(this.assetsDir,    ...arguments) }
-	getVersionDir()   { return this.resolvePath(this.versionDir,   ...arguments) }
-	getNativesDir()   { return this.resolvePath(this.nativesDir,   ...arguments) }
+	getRootDir()      { return this.resolvePath(this._rootDir,      ...arguments) }
+	getVersionsDir()  { return this.resolvePath(this._versionsDir,  ...arguments) }
+	getAssetsDir()    { return this.resolvePath(this._assetsDir,    ...arguments) }
+	getLibrariesDir() { return this.resolvePath(this._librariesDir, ...arguments) }
 }
