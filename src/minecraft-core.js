@@ -1,5 +1,6 @@
 const path = require('path');
 const fs   = require('fs');
+const { decode, encode } = require('nbt-ts');
 const { taskDownloads, taskDownload } = load('httpSeries');
 
 
@@ -193,7 +194,41 @@ module.exports = class
 	}
 	
 	
-	ensureConfigExists()
+	generateServers(servers) {
+		const rootDir = this.minecraft.getRootDir();
+		const serversPath = this.minecraft.getRootDir('servers.dat');
+		const data = {
+			'servers': []
+		};
+		
+		if (servers) {
+			for(const server of servers) {
+				data.servers.push({
+					'name': server.name,
+					'ip': server.address+':'+server.port,
+				});
+			}
+			
+			if (!fs.existsSync(rootDir)) {
+				fs.mkdirSync(rootDir, { recursive: true });
+			}
+			
+			fs.writeFileSync(serversPath, encode('root', data));
+			return this;
+		}
+		
+		if (fs.existsSync(serversPath)) {
+			const buffer = fs.readFileSync(serversPath);
+			const nbtData = decode(buffer);
+			
+			return nbtData.value;
+		} else {
+			return data;
+		}
+	}
+	
+	
+	generateConfig()
 	{
 		const optionsPath          = this.minecraft.getRootDir('options.txt');
 		const launcherProfilesPath = this.minecraft.getRootDir('launcher_profiles.json');

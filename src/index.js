@@ -96,7 +96,6 @@ function main()
 		minecraft.uuid(message[0].uuid);
 		minecraft.userName(message[0].username);
 		minecraft.accessToken(message[0].accessToken);
-		minecraft.server(message[0].server);
 		
 		
 		try
@@ -133,9 +132,10 @@ function main()
 			await fileManager.downloadFiles(mainTaskWindow, message[0].downloads);
 			
 			
-			const minecraftGame = new MinecraftCore(minecraft);
-			await minecraftGame.setup(mainTaskWindow);
-			await minecraftGame.ensureConfigExists();
+			const minecraftCore = new MinecraftCore(minecraft);
+			await minecraftCore.setup(mainTaskWindow);
+			await minecraftCore.generateServers(message[0].server);
+			await minecraftCore.generateConfig();
 			
 			if (message[0].extensionType === 'fabric') {
 				const fabric = new MinecraftFabric(minecraft, message[0].extensionValue);
