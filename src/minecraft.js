@@ -1,6 +1,7 @@
 const path   = require('path');
 const fs     = require('fs');
 const AdmZip = require("adm-zip");
+const { decode, encode } = require('nbt-ts');
 
 
 module.exports = class
@@ -384,6 +385,34 @@ module.exports = class
 	}
 	
 	
+	
+	server(value) {
+		const serversPath = this.getRootDir('servers.dat');
+		const data = {
+			'servers': []
+		};
+		
+		if (value) {
+			for(const server of value) {
+				data.servers.push({
+					'name': server.name,
+					'ip': server.address+':'+server.port,
+				});
+			}
+			
+			fs.writeFileSync(serversPath, encode('root', data));
+			return this;
+		}
+		
+		if (fs.existsSync(serversPath)) {
+			const buffer = fs.readFileSync(serversPath);
+			const nbtData = decode(buffer);
+			
+			return nbtData.value;
+		} else {
+			return data;
+		}
+	}
 	
 	launcherName(value) {
 		if (value) {

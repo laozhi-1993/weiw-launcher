@@ -16,7 +16,6 @@ const fs    = require('fs');
 
 
 const { closeAll, window, taskWindow } = load('windows');
-const broadcastAddress  = load('broadcastAddress');
 const CheckJava         = load('checkJava');
 const FileManager       = load('fileManager');
 const Minecraft         = load('minecraft');
@@ -97,6 +96,7 @@ function main()
 		minecraft.uuid(message[0].uuid);
 		minecraft.userName(message[0].username);
 		minecraft.accessToken(message[0].accessToken);
+		minecraft.server(message[0].server);
 		
 		
 		try
@@ -161,12 +161,6 @@ function main()
 		}
 		
 		try {
-			const closes = [];
-			
-			for(const { name, address, port } of message[0].server) {
-				closes.push(broadcastAddress( name, address, port ));
-			}
-			
 			mainTaskWindow.hide();
 			mainWindow.addEvent('start');
 			
@@ -178,10 +172,6 @@ function main()
 				
 				if (data === 'exit')
 				{
-					for(const close of closes) {
-						close();
-					}
-					
 					minecraft = null;
 					minecraftLauncher = null;
 					
