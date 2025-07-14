@@ -1,180 +1,164 @@
-const { BrowserWindow, BrowserView, ipcMain, dialog } = require('electron');
+const { BrowserWindow, WebContentsView, ipcMain, dialog } = require('electron');
 const path = require('path');
 
 
-function closeAll() {
-	for(const window of BrowserWindow.getAllWindows()) {
-		window.close();
+	function closeAll() {
+		for(const window of BrowserWindow.getAllWindows()) {
+			window.close();
+		}
 	}
-}
 
-
-function window( setURL, setWidth, setHeight, setResizable )
-{
-	const window = new BrowserWindow({
-		width: setWidth,
-		height: setHeight,
-		frame: false,
-		show: false,
-		webPreferences: {
-			preload: path.join(__dirname, 'windowsPreload.js')
-		}
-	});
-	
-	const view = new BrowserView({
-		webPreferences:{
-			preload: path.join(__dirname, 'windowsPreload.js')
-		}
-	});
-	
-	const resize = function () {
-		view.setBounds({
-			x: 0,
-			y: 0,
-			width: window.getContentBounds().width,
-			height: window.getContentBounds().height,
-		});
-		
-		return resize;
-	}
-	
-	view.webContents.loadURL('about:blank');
-	view.webContents.once('dom-ready', () => window.show());
-	
-	window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
-		if (isMainFrame) {
-			view.webContents.loadFile('html/load.html');
-			window.setBrowserView(view);
-		}
-	});
-	window.webContents.on('did-fail-load', (event, errorCode) => {
-		if (errorCode !== -3) {
-			view.webContents.loadFile('html/load_error.html');
-		}
-	});
-	window.webContents.on('did-navigate', (event, url, httpResponseCode, httpStatusText) => {
-		window.webContents.once('did-finish-load', () => {
-			if (httpResponseCode === 404) view.webContents.loadFile('html/load_404.html');
-			if (httpResponseCode === 200) window.removeBrowserView(view);
-		});
-	});
-	
-	
-	window.on('resize', resize());
-	window.on('closed', () => view.webContents.destroy());
-	
-	if(setResizable) {
-		window.setMinimumSize(setWidth, setHeight); //设置窗口最小宽度和高度
-		window.setResizable(true); //设置窗口是否可以调整大小
-	} else {
-		window.setResizable(false); //设置窗口是否可以调整大小
-	}
-	
-	window.loadURL(setURL);
-	window.addEvent = function (name, data)
+	class Windows
 	{
-		if(data === undefined) {
-			window.webContents.send('addEvent', {'name': name});
-		} else {
-			window.webContents.send('addEvent', {'name': name, 'data': data});
-		}
-	}
-	
-	return window;
-}
-
-
-function taskWindow( setWidth, setHeight, mainWindow )
-{
-	const window = new BrowserWindow({
-		width: setWidth,
-		height: setHeight,
-		resizable: false,
-		maximizable: false,
-		frame: false,
-		show: false,
-		modal: true,
-		parent: mainWindow,
-		webPreferences: {
-			preload: path.join(__dirname, 'windowsPreload.js')
-		}
-	});
-	
-	window.loadURL('about:blank');
-	window.on('hide', () => window.loadURL('about:blank'));
-	
-	
-	window.addEvent = function(name, data)
-	{
-		if(data === undefined) {
-			window.isDestroyed() || window.webContents.send('addEvent', {'name': name});
-		} else {
-			window.isDestroyed() || window.webContents.send('addEvent', {'name': name, 'data': data});
-		}
-	}
-	
-	window.start = function(setFile, callback)
-	{
-		window.loadFile(setFile);
-		window.show();
-		
-		const domReady = new Promise((resolve) => {
-			window.webContents.once('dom-ready', resolve);
-		});
-		
-		return domReady.then(() => {
-			let returnValue;
-			
-			const task = new Promise((resolve, reject) => {
-				try {
-					returnValue = callback(resolve, reject);
-				} catch (error) {
-					reject(error);
+		constructor(setURL, setWidth, setHeight, setResizable)
+		{
+			this.view = new WebContentsView({
+				webPreferences:{
+					preload: path.join(__dirname, 'windowsPreload.js')
 				}
-				
-				window.once('hide', () => {
-					reject('stop');
+			});
+			
+			this.window = new BrowserWindow({
+				width: setWidth,
+				height: setHeight,
+				minWidth: setWidth,
+				minHeight: setHeight,
+				frame: false,
+				show: false,
+				webPreferences: {
+					preload: path.join(__dirname, 'windowsPreload.js')
+				}
+			});
+			
+			
+			this.add('html/load.html', () => this.window.show());
+			
+			this.window.webContents.on('did-start-navigation', (event) => {
+				if (!event.isSameDocument && event.isMainFrame) {
+					this.add('html/load.html');
+				}
+			});
+			this.window.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+				if (isMainFrame) {
+					this.add('html/load_error.html');
+				}
+			});
+			this.window.webContents.on('did-navigate', (event, url, httpResponseCode, httpStatusText) => {
+				this.window.webContents.once('did-stop-loading', () => {
+					(httpResponseCode === 404) && this.add('html/load_404.html');
+					(httpResponseCode === 200) && this.remove();
 				});
 			});
-			
-			task.finally(returnValue);
-			return task;
-		});
-	}
-	
-	window.error = function(error)
-	{
-		if (error instanceof Error)
+			this.window.on('resize',     () => this.resize());
+			this.window.on('show',       () => this.resize());
+			this.window.on('maximize',   () => this.resize());
+			this.window.on('minimize',   () => this.resize());
+			this.window.on('unmaximize', () => this.resize());
+			this.window.on('restore',    () => this.resize());
+			this.window.on('closed',     () => this.view.webContents.destroy());
+			this.window.loadURL(setURL);
+		}
+		
+		add(setFile, callback = () => {})
 		{
-			dialog.showMessageBox(window, {
-				type: 'error',
-				title: '出错了！',
-				message: error.stack,
+			this.view.webContents.loadFile(setFile);
+			this.view.webContents.once('dom-ready', callback);
+			this.window.contentView.addChildView(this.view);
+		}
+		
+		remove()
+		{
+			this.view.webContents.loadURL('about:blank');
+			this.window.contentView.removeChildView(this.view);
+		}
+		
+		resize()
+		{
+			this.view.setBounds({
+				x: 0,
+				y: 0,
+				width: this.window.getContentBounds().width,
+				height: this.window.getContentBounds().height,
 			});
 		}
-		else
+		
+		addEvent(name, data)
 		{
-			if (error === 'stop')
-			{
+			if (this.window.isDestroyed()) {
 				return;
 			}
 			
-			dialog.showMessageBox(window, {
-				type: 'error',
-				title: '出错了！',
-				message: error,
+			if(data === undefined) {
+				this.view.webContents.send('addEvent', {'name': name});
+				this.window.webContents.send('addEvent', {'name': name});
+			} else {
+				this.view.webContents.send('addEvent', {'name': name, 'data': data});
+				this.window.webContents.send('addEvent', {'name': name, 'data': data});
+			}
+		}
+		
+		start(setFile, callback)
+		{
+			const domReady = new Promise((resolve) => {
+				this.add(setFile, resolve);
+			});
+			
+			return domReady.then(() => {
+				let returnValue;
+				
+				const task = new Promise((resolve, reject) => {
+					try {
+						returnValue = callback(resolve, reject);
+					} catch (error) {
+						reject(error);
+					}
+					
+					this.window.once('close', () => {
+						this.remove();
+						reject('stop');
+					});
+					
+					ipcMain.once('cancel' ,(event) => {
+						this.remove();
+						reject('stop');
+					});
+				});
+				
+				task.finally(returnValue);
+				return task;
 			});
 		}
+		
+		error(error)
+		{
+			if (error instanceof Error)
+			{
+				dialog.showMessageBox(this.window, {
+					type: 'error',
+					title: '出错了！',
+					message: error.stack,
+				});
+			}
+			else
+			{
+				if (error === 'stop')
+				{
+					return;
+				}
+				
+				dialog.showMessageBox(this.window, {
+					type: 'error',
+					title: '出错了！',
+					message: error,
+				});
+			}
+		}
 	}
-	
-	return window;
-}
 
 
 	module.exports = {
-		window,
+		Windows,
 		closeAll,
-		taskWindow,
 	};
 
 
@@ -185,6 +169,4 @@ ipcMain.on('maximize'    ,(event) => { if(BW = BrowserWindow.fromWebContents(eve
 ipcMain.on('close'       ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.close()        });
 ipcMain.on('restore'     ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.restore()      });
 ipcMain.on('reload'      ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.reload()       });
-ipcMain.on('show'        ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.show()         });
-ipcMain.on('hide'        ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.hide()         });
 ipcMain.on('DevTools'    ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.openDevTools() });

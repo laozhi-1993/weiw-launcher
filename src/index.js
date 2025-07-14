@@ -15,42 +15,41 @@ const fs    = require('fs');
 	}
 
 
-const { closeAll, window, taskWindow } = load('windows');
-const CheckJava         = load('checkJava');
-const FileManager       = load('fileManager');
-const Minecraft         = load('minecraft');
-const MinecraftCore     = load('minecraft-core');
-const MinecraftFabric   = load('minecraft-fabric');
-const MinecraftNeoForge = load('minecraft-neoforge');
-const MinecraftForge    = load('minecraft-forge');
-const MinecraftLauncher = load('minecraft-launcher');
+const { Windows, closeAll } = load('windows');
+const CheckJava             = load('checkJava');
+const FileManager           = load('fileManager');
+const Minecraft             = load('minecraft');
+const MinecraftCore         = load('minecraft-core');
+const MinecraftFabric       = load('minecraft-fabric');
+const MinecraftNeoForge     = load('minecraft-neoforge');
+const MinecraftForge        = load('minecraft-forge');
+const MinecraftLauncher     = load('minecraft-launcher');
 
 
 function main()
 {
 	const config = JSON.parse(fs.readFileSync('config.json','utf-8'));
-	const mainWindow = window(config.url, 1100, 800, true);
-	const mainTaskWindow = taskWindow(500, 600, mainWindow);
+	const mainWindows = new Windows(config.url, 1100, 800);
 	
 	
 	app.on('second-instance', () => {
-		mainWindow.isMinimized() && mainWindow.restore();
-		mainWindow.focus();
+		mainWindows.window.isMinimized() && mainWindows.window.restore();
+		mainWindows.window.focus();
 	});
 	
 	
-	mainWindow.once('closed', () => {
+	mainWindows.window.once('closed', () => {
 		closeAll();
 	});
 	
-	mainWindow.webContents.on('did-frame-finish-load', () => {
+	mainWindows.window.webContents.on('did-frame-finish-load', () => {
 		if (minecraftLauncher) {
-			mainWindow.addEvent('start');
+			mainWindows.addEvent('start');
 		} else {
-			mainWindow.addEvent('exit');
+			mainWindows.addEvent('exit');
 		}
 		
-		mainWindow.addEvent('jvm', [
+		mainWindows.addEvent('jvm', [
 			'-Xmx6G',
 			'-XX:+UseG1GC',
 			'-XX:-UseAdaptiveSizePolicy',
@@ -61,17 +60,12 @@ function main()
 			'-Dlog4j2.formatMsgNoLookups=true',
 		]);
 		
-		mainWindow.addEvent('version', app.getVersion());
+		mainWindows.addEvent('version', app.getVersion());
 	});
 	
 	
 	let minecraft = null;
 	let minecraftLauncher = null;
-	
-	
-	ipcMain.on('windowApi', (event, message) => {
-		window(...message);
-	});
 	
 	
 	ipcMain.on('openApi', (event, message) => {
@@ -129,27 +123,27 @@ function main()
 			
 			const fileManager = new FileManager(minecraft);
 			await fileManager.clearUnwantedMods(message[0].mods);
-			await fileManager.downloadFiles(mainTaskWindow, message[0].downloads);
+			await fileManager.downloadFiles(mainWindows, message[0].downloads);
 			
 			
 			const minecraftCore = new MinecraftCore(minecraft);
-			await minecraftCore.setup(mainTaskWindow);
+			await minecraftCore.setup(mainWindows);
 			await minecraftCore.generateServers(message[0].server);
 			await minecraftCore.generateConfig();
 			
 			if (message[0].extensionType === 'fabric') {
 				const fabric = new MinecraftFabric(minecraft, message[0].extensionValue);
-				await fabric.setup(mainTaskWindow);
+				await fabric.setup(mainWindows);
 			}
 			
 			if (message[0].extensionType === 'forge') {
 				const forge = new MinecraftForge(minecraft, message[0].extensionValue);
-				await forge.setup(mainTaskWindow);
+				await forge.setup(mainWindows);
 			}
 			
 			if (message[0].extensionType === 'neoforge') {
 				const neoforge = new MinecraftNeoForge(minecraft, message[0].extensionValue);
-				await neoforge.setup(mainTaskWindow);
+				await neoforge.setup(mainWindows);
 			}
 		}
 		catch(error)
@@ -157,17 +151,17 @@ function main()
 			minecraft = null;
 			minecraftLauncher = null;
 			
-			return mainTaskWindow.error(error);
+			return mainWindows.error(error);
 		}
 		
 		try {
-			mainTaskWindow.hide();
-			mainWindow.addEvent('start');
+			mainWindows.remove();
+			mainWindows.addEvent('start');
 			
 			minecraftLauncher = new MinecraftLauncher(minecraft);
 			minecraftLauncher.start(function (data) {
 				if (data === 'show') {
-					mainWindow.minimize();
+					mainWindows.window.minimize();
 				}
 				
 				if (data === 'exit')
@@ -175,14 +169,14 @@ function main()
 					minecraft = null;
 					minecraftLauncher = null;
 					
-					mainWindow.addEvent('exit');
-					mainWindow.isMinimized() && mainWindow.restore();
-					mainWindow.focus();
+					mainWindows.addEvent('exit');
+					mainWindows.window.isMinimized() && mainWindows.window.restore();
+					mainWindows.window.focus();
 				}
 				
 				if (data === 'exitError')
 				{
-					const result = dialog.showMessageBoxSync(mainWindow, {
+					const result = dialog.showMessageBoxSync(mainWindows, {
 						type: 'question',
 						title: '游戏异常退出！',
 						buttons: ['关闭', '打开'],
