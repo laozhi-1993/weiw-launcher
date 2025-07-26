@@ -30,7 +30,7 @@ const { contextBridge, ipcRenderer, webFrame } = require('electron');
 	
 	
 window.addEventListener('keydown', function(event) {
-    if(event.key === 'F12') ipcRenderer.send("DevTools");
+    if(event.key === 'F12') ipcRenderer.send("openDevTools");
 });
 window.addEventListener('DOMContentLoaded', function() {
 	webFrame.clearCache();
