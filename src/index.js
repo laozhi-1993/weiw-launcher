@@ -176,7 +176,7 @@ function main()
 				
 				if (data === 'exitError')
 				{
-					const result = dialog.showMessageBoxSync(mainWindows, {
+					const result = dialog.showMessageBoxSync(mainWindows.window, {
 						type: 'question',
 						title: '游戏异常退出！',
 						buttons: ['关闭', '打开'],

@@ -118,7 +118,7 @@ class FileDownloads
 				});
 				
 				
-				this.trigger('start', readyToDownloadFile.id, path.basename(readyToDownloadFile.url));
+				this.trigger('start', readyToDownloadFile.id, path.basename(decodeURIComponent(readyToDownloadFile.url)));
 				this.downloadingFiles[readyToDownloadFile.id] = fileDownload;
 			}
 			
