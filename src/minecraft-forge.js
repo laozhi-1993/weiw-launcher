@@ -162,7 +162,7 @@ module.exports = class
 		{
 			return task.start('html/task_install.html', (resolve, reject) => {
 				
-				task.addEvent('operation', '安装forge中请稍等');
+				task.sendEvent('operation', '安装forge中请稍等');
 				
 				
 				const result = spawn(this.minecraft.java(), [ '-jar', this.getLoaderPath(), '--installClient', '.' ], {cwd: this.minecraft.getRootDir()});

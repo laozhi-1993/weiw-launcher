@@ -44,12 +44,12 @@ function main()
 	
 	mainWindows.window.webContents.on('did-frame-finish-load', () => {
 		if (minecraftLauncher) {
-			mainWindows.addEvent('start');
+			mainWindows.sendEvent('start');
 		} else {
-			mainWindows.addEvent('exit');
+			mainWindows.sendEvent('exit');
 		}
 		
-		mainWindows.addEvent('jvm', [
+		mainWindows.sendEvent('jvm', [
 			'-Xmx6G',
 			'-XX:+UseG1GC',
 			'-XX:-UseAdaptiveSizePolicy',
@@ -60,7 +60,7 @@ function main()
 			'-Dlog4j2.formatMsgNoLookups=true',
 		]);
 		
-		mainWindows.addEvent('version', app.getVersion());
+		mainWindows.sendEvent('version', app.getVersion());
 	});
 	
 	
@@ -68,7 +68,7 @@ function main()
 	let minecraftLauncher = null;
 	
 	
-	ipcMain.on('openApi', (event, message) => {
+	ipcMain.on('open', (event, message) => {
 		shell.openExternal(...message);
 	});
 	
@@ -156,7 +156,7 @@ function main()
 		
 		try {
 			mainWindows.remove();
-			mainWindows.addEvent('start');
+			mainWindows.sendEvent('start');
 			
 			minecraftLauncher = new MinecraftLauncher(minecraft);
 			minecraftLauncher.start(function (data) {
@@ -169,7 +169,7 @@ function main()
 					minecraft = null;
 					minecraftLauncher = null;
 					
-					mainWindows.addEvent('exit');
+					mainWindows.sendEvent('exit');
 					mainWindows.window.isMinimized() && mainWindows.window.restore();
 					mainWindows.window.focus();
 				}

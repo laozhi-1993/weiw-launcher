@@ -291,22 +291,22 @@ function taskDownloads(task, downloads, title, threadCount = 20)
 	{
 		return task.start('html/task_downloadFiles.html', (resolve, reject) => {
 			
-			task.addEvent('operation', title);
+			task.sendEvent('operation', title);
 			
-			const speed = new Speed((size) => task.addEvent('speed', size));
+			const speed = new Speed((size) => task.sendEvent('speed', size));
 			const fileDownloads = new FileDownloads(threadCount);
 			
 			
 			fileDownloads.on('progress', (total, complete) => {
-				task.addEvent('progress', {'total': total, 'complete': complete});
+				task.sendEvent('progress', {'total': total, 'complete': complete});
 			});
 			
 			fileDownloads.on('start', (id, fileName) => {
-				task.addEvent('downloadStart', {'id': id, 'fileName': fileName});
+				task.sendEvent('downloadStart', {'id': id, 'fileName': fileName});
 			});
 			
 			fileDownloads.on('data', (id, totalBytes, downloadedBytes) => {
-				task.addEvent('downloadProgress', {'id': id, 'totalBytes': totalBytes, 'downloadedBytes': downloadedBytes});
+				task.sendEvent('downloadProgress', {'id': id, 'totalBytes': totalBytes, 'downloadedBytes': downloadedBytes});
 			});
 			
 			
@@ -331,13 +331,13 @@ function taskDownload(task, url, title, failure, callback)
 {
 	return task.start('html/task_downloadFile.html', (resolve, reject) => {
 		
-		task.addEvent('operation', title);
+		task.sendEvent('operation', title);
 		
-		const speed = new Speed((size) => task.addEvent('speed', size));
+		const speed = new Speed((size) => task.sendEvent('speed', size));
 		const fileDownload = new FileDownload(url);
 		
 		
-		fileDownload.start(speed, (total, complete) => task.addEvent('progress', {'total': total, 'complete': complete}))
+		fileDownload.start(speed, (total, complete) => task.sendEvent('progress', {'total': total, 'complete': complete}))
 			.then(callback)
 			.then(() => resolve())
 			.catch(() => reject(failure));

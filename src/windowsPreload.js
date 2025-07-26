@@ -1,14 +1,14 @@
-const { contextBridge, ipcRenderer } = require('electron');
-	contextBridge.exposeInMainWorld('openApi',   function (...args){ return ipcRenderer.send("openApi", args) });
-	contextBridge.exposeInMainWorld('start',     function (...args){ return ipcRenderer.send("start",   args) });	
+const { contextBridge, ipcRenderer, webFrame } = require('electron');
+	contextBridge.exposeInMainWorld('openApi', function (...args){ return ipcRenderer.send("open",  args) });
+	contextBridge.exposeInMainWorld('start',   function (...args){ return ipcRenderer.send("start", args) });	
 	
-	
-	ipcRenderer.on('addEvent', (event, arg) => {
+	ipcRenderer.on('event', (event, arg) => {
 		if(arg.name === 'consoleLog') {
 			console.log(arg.data);
-		} else {
-			window.dispatchEvent(new CustomEvent(arg.name ,{detail:arg.data}));
+			return;
 		}
+		
+		window.dispatchEvent(new CustomEvent(arg.name, {detail:arg.data}));
 	});
 	
 	
@@ -33,6 +33,8 @@ window.addEventListener('keydown', function(event) {
     if(event.key === 'F12') ipcRenderer.send("DevTools");
 });
 window.addEventListener('DOMContentLoaded', function() {
+	webFrame.clearCache();
+	
 	if(!ipcRenderer.sendSync("isResizable"))
 	{
 		requestAnimationFrame(() => {

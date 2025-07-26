@@ -8,15 +8,48 @@ const path = require('path');
 		}
 	}
 
+	class TimeoutLatch
+	{
+		constructor(time)
+		{
+			this.time = time;
+			
+			this.toggle = false;
+			this.timerId = false;
+			this.callback = false;
+		}
+		
+		start()
+		{
+			clearTimeout(this.timerId);
+			
+			this.timerId = setTimeout(() => {
+				if (this.callback) {
+					this.callback();
+				} else {
+					this.toggle = true;
+				}
+			}, this.time);
+			
+			this.toggle = false;
+			this.callback = false;
+		}
+		
+		done(callback)
+		{
+			if (this.toggle) {
+				callback();
+			} else {
+				this.callback = callback;
+			}
+		}
+	}
+
 	class Windows
 	{
-		constructor(setURL, setWidth, setHeight, setResizable)
+		constructor(setURL, setWidth, setHeight)
 		{
-			this.view = new WebContentsView({
-				webPreferences:{
-					preload: path.join(__dirname, 'windowsPreload.js')
-				}
-			});
+			this.timeoutLatch = new TimeoutLatch(600);
 			
 			this.window = new BrowserWindow({
 				width: setWidth,
@@ -30,32 +63,52 @@ const path = require('path');
 				}
 			});
 			
+			this.view = new WebContentsView({
+				webPreferences: {
+					preload: path.join(__dirname, 'windowsPreload.js')
+				}
+			});
+			this.view.webContents.loadURL("about:blank");
+			this.view.webContents.once('dom-ready', this.window.show.bind(this.window));
 			
-			this.add('html/load.html', () => this.window.show());
 			
 			this.window.webContents.on('did-start-navigation', (event) => {
 				if (!event.isSameDocument && event.isMainFrame) {
+					this.timeoutLatch.start();
 					this.add('html/load.html');
 				}
 			});
+			
 			this.window.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
 				if (isMainFrame) {
-					this.add('html/load_error.html');
+					this.timeoutLatch.done(() => {
+						this.add('html/load_error.html');
+					});
 				}
 			});
+			
 			this.window.webContents.on('did-navigate', (event, url, httpResponseCode, httpStatusText) => {
-				this.window.webContents.once('did-stop-loading', () => {
-					(httpResponseCode === 404) && this.add('html/load_404.html');
-					(httpResponseCode === 200) && this.remove();
+				if (httpResponseCode === 200) {
+					this.timeoutLatch.done(() => {
+						this.remove();
+					});
+					return;
+				}
+				
+				this.timeoutLatch.done(() => {
+					this.add('html/load_code.html', () => {
+						this.sendEvent('code', httpResponseCode);
+					});
 				});
 			});
+			
+			
 			this.window.on('resize',     () => this.resize());
 			this.window.on('show',       () => this.resize());
 			this.window.on('maximize',   () => this.resize());
 			this.window.on('minimize',   () => this.resize());
 			this.window.on('unmaximize', () => this.resize());
 			this.window.on('restore',    () => this.resize());
-			this.window.on('closed',     () => this.view.webContents.destroy());
 			this.window.loadURL(setURL);
 		}
 		
@@ -68,7 +121,8 @@ const path = require('path');
 		
 		remove()
 		{
-			this.view.webContents.loadURL('about:blank');
+			this.view.webContents.forcefullyCrashRenderer();
+			this.view.webContents.loadURL("about:blank");
 			this.window.contentView.removeChildView(this.view);
 		}
 		
@@ -82,18 +136,18 @@ const path = require('path');
 			});
 		}
 		
-		addEvent(name, data)
+		sendEvent(name, data)
 		{
 			if (this.window.isDestroyed()) {
 				return;
 			}
 			
 			if(data === undefined) {
-				this.view.webContents.send('addEvent', {'name': name});
-				this.window.webContents.send('addEvent', {'name': name});
+				this.view.webContents.send('event', {'name': name});
+				this.window.webContents.send('event', {'name': name});
 			} else {
-				this.view.webContents.send('addEvent', {'name': name, 'data': data});
-				this.window.webContents.send('addEvent', {'name': name, 'data': data});
+				this.view.webContents.send('event', {'name': name, 'data': data});
+				this.window.webContents.send('event', {'name': name, 'data': data});
 			}
 		}
 		
@@ -113,13 +167,16 @@ const path = require('path');
 						reject(error);
 					}
 					
-					this.window.once('close', () => {
+					ipcMain.once('cancel' ,(event) => {
 						this.remove();
 						reject('stop');
 					});
 					
-					ipcMain.once('cancel' ,(event) => {
-						this.remove();
+					this.window.once('close', () => {
+						reject('stop');
+					});
+					
+					this.window.webContents.once('did-start-navigation', () => {
 						reject('stop');
 					});
 				});
@@ -162,11 +219,11 @@ const path = require('path');
 	};
 
 
-ipcMain.on('isResizable' ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.isResizable()  });
-ipcMain.on('isMaximized' ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.isMaximized()  });
-ipcMain.on('minimize'    ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.minimize()     });
-ipcMain.on('maximize'    ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.maximize()     });
-ipcMain.on('close'       ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.close()        });
-ipcMain.on('restore'     ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.restore()      });
-ipcMain.on('reload'      ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.reload()       });
-ipcMain.on('DevTools'    ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.openDevTools() });
+ipcMain.on('DevTools'    ,(event) => event.sender.openDevTools());
+ipcMain.on('isResizable' ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.isResizable() });
+ipcMain.on('isMaximized' ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.isMaximized() });
+ipcMain.on('minimize'    ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.minimize()    });
+ipcMain.on('maximize'    ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.maximize()    });
+ipcMain.on('close'       ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.close()       });
+ipcMain.on('restore'     ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.restore()     });
+ipcMain.on('reload'      ,(event) => { if(BW = BrowserWindow.fromWebContents(event.sender)) event.returnValue = BW.reload()      });

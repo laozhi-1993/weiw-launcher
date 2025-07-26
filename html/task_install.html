@@ -16,60 +16,69 @@
 					radial-gradient(at top, rgba(255, 255, 255, 0.50) 0%, rgba(0, 0, 0, 0.08) 63%);
 				background-blend-mode: multiply, screen;
 			}
+			
 			section {
 				margin: 15px;
 				margin-top: 30px;
 				margin-bottom: 0;
-			}
-			main {
-				-webkit-app-region: drag;
-				height: calc(100vh - 89px);
-			}
-			
-			.container {
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-				width: 100%;
-				height: 100%;
-				box-sizing: border-box;
-				border-radius: 3px;
-				background-color: #fff;
-			}
-			.container h1 {
 				
-			}
-			.container svg {
-				width: 200px;
-			}
-			
-			.modern-button {
-				display: block;
-				width: 100%; /* 按钮宽度跟随容器宽度 */
-				margin-top: 8px;
-				padding: 8px 0;
-				font-size: 18px;
-				font-weight: bold;
-				color: #ffffff;
-				background-color: #4CAF50;
-				border: none;
-				border-radius: 5px;
-				transition: all 0.3s ease;
-				cursor: pointer;
-				text-transform: uppercase;
-				letter-spacing: 1.5px;
-				text-align: center;
-			}
-
-			.modern-button:hover {
-				background-color: #45a049;
-				transform: scale(1.001);
-			}
-
-			.modern-button:active {
-				transform: scale(0.98);
-				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+				
+				main {
+					-webkit-app-region: drag;
+					height: calc(100vh - 89px);
+					
+					
+					.container {
+						display: flex;
+						flex-direction: column;
+						justify-content: center;
+						align-items: center;
+						width: 100%;
+						height: 100%;
+						box-sizing: border-box;
+						border-radius: 3px;
+						background: rgba(240, 242, 245, 1);
+						
+						
+						h1 {
+							
+						}
+						.container svg {
+							width: 200px;
+						}
+					}
+				}
+				
+				footer {
+					.modern-button {
+						display: block;
+						width: 100%; /* 按钮宽度跟随容器宽度 */
+						margin-top: 8px;
+						padding: 8px 0;
+						font-size: 18px;
+						font-weight: bold;
+						color: #ffffff;
+						background-color: #4CAF50;
+						border: none;
+						border-radius: 5px;
+						transition: all 0.3s ease;
+						cursor: pointer;
+						text-transform: uppercase;
+						letter-spacing: 1.5px;
+						text-align: center;
+						
+						
+						&:hover {
+							background-color: #45a049;
+							transform: scale(1.001);
+						}
+						
+						&:active {
+							transform: scale(0.98);
+							box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+						}
+					}
+				}
 			}
 		</style>
 	</head>
@@ -134,6 +143,7 @@
 			<div id="restore" ><svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3132"><path d="M512 1255.489906M865.682191 310.085948l-554.675195 0c-14.634419 0-26.403358 11.973616-26.403358 26.710374L284.603638 423.681791l-92.309414 0c-14.634419 0-26.403358 11.973616-26.403358 26.710374l0 349.998001c0 14.634419 11.768939 26.505697 26.403358 26.505697l554.675195 0c14.634419 0 26.710374-11.871277 26.710374-26.505697L773.679792 713.30002l92.002399 0c14.634419 0 26.710374-11.871277 26.710374-26.505697l0-349.998001C892.392564 322.059564 880.31661 310.085948 865.682191 310.085948zM728.65081 781.86688 210.817509 781.86688 210.817509 468.710774l517.8333 0L728.65081 781.86688zM847.363582 668.271037l-73.68379 0L773.679792 450.392165c0-14.634419-12.075954-26.710374-26.710374-26.710374L329.530282 423.681791l0-68.56686 517.8333 0L847.363582 668.271037z" p-id="3133"></path></svg></div>
 			<div id="close"   ><svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1501"><path d="M557.311759 513.248864l265.280473-263.904314c12.54369-12.480043 12.607338-32.704421 0.127295-45.248112-12.512727-12.576374-32.704421-12.607338-45.248112-0.127295L512.127295 467.904421 249.088241 204.063755c-12.447359-12.480043-32.704421-12.54369-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.280796l262.975407 263.775299-265.151458 263.744335c-12.54369 12.480043-12.607338 32.704421-0.127295 45.248112 6.239161 6.271845 14.463432 9.440452 22.687703 9.440452 8.160624 0 16.319527-3.103239 22.560409-9.311437l265.216826-263.807983 265.440452 266.240344c6.239161 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.311759 513.248864z" fill="#575B66" p-id="1502"></path></svg></div>
 		</window-header>
+		
 		<section>
 			<main>
 				<div class="container">
@@ -149,8 +159,8 @@
 		
 		
 		<script>
-			window.addEventListener("operation", (data) => {
-				document.querySelector('h1').innerHTML = data.detail;
+			window.addEventListener("operation", (event) => {
+				document.querySelector('h1').innerHTML = event.detail;
 			});
 		</script>
 	</body>
