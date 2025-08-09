@@ -134,16 +134,20 @@ module.exports = class
 	{
 		const data = [];
 		
-		for (const { hash } of Object.values(objects))
+		for (const [key, value] of Object.entries(objects))
 		{
-			const hashPrefix = hash.slice(0, 2);
-			const assetsUrl  = `https://resources.download.minecraft.net/${hashPrefix}/${hash}`;
-			const assetsPath = path.posix.join(hashPrefix, hash);
+			const hashPrefix = value.hash.slice(0, 2);
+			let assetsUrl = `https://resources.download.minecraft.net/${hashPrefix}/${value.hash}`;
+			let assetsPath = this.minecraft.getAssetsDir('objects', path.posix.join(hashPrefix, value.hash));
 			
+			
+			if (this.minecraft.versionCompare('1.6.4', '<=')) {
+				assetsPath = this.minecraft.getAssetsDir(key);
+			}
 			
 			data.push({
 				'url': assetsUrl,
-				'path': this.minecraft.getAssetsDir('objects', assetsPath),
+				'path': assetsPath,
 			});
 		}
 		
