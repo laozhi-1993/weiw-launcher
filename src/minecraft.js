@@ -365,6 +365,7 @@ module.exports = class
 		args.interpolate('${game_directory}',      this.getRootDir());          //游戏目录
 		args.interpolate('${library_directory}',   this.getLibrariesDir());     //libraries目录路径
 		args.interpolate('${natives_directory}',   this.getNativesDir());       //natives目录路径
+		args.interpolate('${game_assets}',         this.getAssetsDir());        //游戏资源目录
 		args.interpolate('${assets_root}',         this.getAssetsDir());        //游戏资源目录
 		args.interpolate('${assets_index_name}',   this.assetIndex());          //游戏资源版本
 		
