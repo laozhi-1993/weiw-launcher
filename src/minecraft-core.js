@@ -141,7 +141,7 @@ module.exports = class
 			let assetsPath = this.minecraft.getAssetsDir('objects', path.posix.join(hashPrefix, value.hash));
 			
 			
-			if (this.minecraft.versionCompare('1.6.4', '<=')) {
+			if (this.minecraft.versionCompare('1.7.2', '<=')) {
 				assetsPath = this.minecraft.getAssetsDir(key);
 			}
 			
