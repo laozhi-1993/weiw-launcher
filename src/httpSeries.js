@@ -280,9 +280,16 @@ function taskDownloads(task, downloads, title, threadCount = 20)
 	let list = [];
 	
 	for(const value of downloads) {
-		if (!list.some(item => item.path === value.path)) {
+		if (!list.some(item => item.path === value.path))
+		{
 			if(!fs.existsSync(value.path)) {
 				list.push(value);
+				continue;
+			}
+			
+			if(value.time >= Math.floor(fs.statSync(value.path).mtimeMs / 1000)) {
+				list.push(value);
+				continue;
 			}
 		}
 	}

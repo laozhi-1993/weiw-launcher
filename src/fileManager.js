@@ -34,16 +34,11 @@ module.exports = class
 		const extraFiles = [];
 		
 		for (const download of downloads) {
-			try {
-				const stats = await fs.stat(this.minecraft.getRootDir(download.path));
-				const modificationTimeInSeconds = Math.floor(stats.mtime.getTime() / 1000);
-				
-				if (download.time && download.time >= modificationTimeInSeconds) {
-					throw new Error('');
-				}
-			} catch(error) {
-				extraFiles.push({'url': download.url, 'path': this.minecraft.getRootDir(download.path)});
-			}
+			extraFiles.push({
+				'url': download.url,
+				'time':download.time,
+				'path': this.minecraft.getRootDir(download.path)
+			});
 		}
 		
 		await taskDownloads(task, extraFiles, '下载额外文件');
