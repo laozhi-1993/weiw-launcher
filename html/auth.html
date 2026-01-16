@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>登录注册</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			}
+			
+			::-webkit-scrollbar {width: 5px}
+			::-webkit-scrollbar {height: 5px}
+			::-webkit-scrollbar-track {border-radius: 5px}
+			::-webkit-scrollbar-track {background-color: #2d3245}
+			::-webkit-scrollbar-thumb {border-radius: 5px}
+			::-webkit-scrollbar-thumb {background-color: #9393ff}
+			:root {
+				--primary-color: #4a6fa5;
+				--primary-dark: #3a5680;
+				--secondary-color: #6c757d;
+				--bg-color: #1a1d29;
+				--card-bg: #242836;
+				--input-bg: #2d3245;
+				--text-color: #e4e6eb;
+				--text-secondary: #b0b3b8;
+				--border-color: #3e4355;
+				--success-color: #28a745;
+				--error-color: #dc3545;
+				--shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+			}
+			
+			body {
+				background-color: var(--bg-color);
+				color: var(--text-color);
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 20px;
+			}
+			
+			.container {
+				display: flex;
+				width: 1000px;
+				height: 550px;
+				background-color: var(--card-bg);
+				border-radius: 10px;
+				overflow: hidden;
+			}
+			
+			/* 左侧登录注册部分 */
+			.auth-section {
+				flex: 1;
+				padding: 40px;
+				display: flex;
+				flex-direction: column;
+			}
+			
+			/* 共享地址输入框区域 */
+			.address-container {
+				margin-bottom: 20px;
+				padding-bottom: 10px;
+				border-bottom: 2px solid var(--primary-color);
+			}
+			
+			.address-input-wrapper {
+				position: relative;
+			}
+			
+			.address-input-wrapper svg {
+				width: 20px;
+				height: 20px;
+				position: absolute;
+				top: 10px;
+				left: 10px;
+				fill: var(--text-color);
+			}
+			
+			.address-input-wrapper input {
+				border-color: var(--primary-color);
+				padding-left: 40px;
+			}
+			
+			.address-input-wrapper input:focus {
+				box-shadow: var(--shadow);
+			}
+			
+			.auth-tabs {
+				display: flex;
+				margin-bottom: 30px;
+				background-color: var(--input-bg);
+				border-radius: 5px;
+			}
+			
+			.auth-tab {
+				flex: 1;
+				padding: 10px;
+				text-align: center;
+				background: transparent;
+				border: none;
+				color: var(--text-color);
+				font-size: 16px;
+				font-weight: 600;
+				cursor: pointer;
+				border-radius: 5px;
+				transition: all 0.3s ease;
+			}
+			
+			.auth-tab.active {
+				background-color: var(--primary-color);
+				color: white;
+			}
+			
+			.auth-form {
+				display: flex;
+				flex-direction: column;
+				gap: 22px;
+			}
+			
+			.form-group {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			
+			label {
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--text-secondary);
+			}
+			
+			input {
+				width: 100%;
+				padding: 10px 16px;
+				background-color: var(--input-bg);
+				border: 1px solid var(--border-color);
+				border-radius: 5px;
+				color: var(--text-color);
+				font-size: 14px;
+				transition: all 0.3s;
+			}
+			
+			input:focus {
+				outline: none;
+				border-color: var(--primary-color);
+			}
+			
+			.password-input {
+				position: relative;
+			}
+			
+			.toggle-password {
+				position: absolute;
+				right: 15px;
+				top: 50%;
+				transform: translateY(-50%);
+				background: none;
+				border: none;
+				color: var(--text-secondary);
+				cursor: pointer;
+				width: 24px;
+				height: 24px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			
+			.primary-btn {
+				background-color: var(--primary-color);
+				color: white;
+				border: none;
+				padding: 10px;
+				border-radius: 5px;
+				font-size: 16px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: background-color 0.3s;
+				margin-top: 10px;
+				width: 100%;
+			}
+			
+			.primary-btn:hover {
+				background-color: var(--primary-dark);
+			}
+			
+			/* 右侧历史记录部分 */
+			.history-section {
+				flex: 1;
+				background-color: #2a2e3f;
+				padding: 40px 30px;
+				border-left: 1px solid var(--border-color);
+			}
+			
+			.history-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 30px;
+			}
+			
+			.history-title {
+				font-size: 22px;
+				font-weight: 700;
+			}
+			
+			.history-list {
+				height: calc(100% - 60px);
+				display: flex;
+				flex-direction: column;
+				gap: 16px;
+				overflow: auto;
+			}
+			
+			.history-item {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				background-color: var(--input-bg);
+				border-radius: 5px;
+				margin: 0 5px;
+				padding: 10px 15px;
+				border: 1px solid transparent;
+				transition: all 0.3s;
+				cursor: pointer;
+			}
+			
+			.history-item:hover {
+				border-color: var(--primary-color);
+			}
+			
+			.history-name {
+				font-weight: 600;
+				word-break: break-all;
+				font-size: 15px;
+				line-height: 1.4;
+			}
+			
+			.history-address {
+				color: var(--text-secondary);
+				font-size: 13px;
+				font-weight: 500;
+			}
+			
+			.action-buttons {
+				display: flex;
+				gap: 8px;
+			}
+			
+			.action-btn {
+				background: none;
+				border: none;
+				color: var(--text-secondary);
+				cursor: pointer;
+				padding: 6px 10px;
+				border-radius: 5px;
+				font-size: 13px;
+				display: flex;
+				align-items: center;
+				gap: 5px;
+				transition: all 0.2s;
+			}
+			
+			.action-btn:hover {
+				background-color: rgba(255, 255, 255, 0.05);
+			}
+			
+			.open-btn:hover {
+				color: var(--primary-color);
+			}
+			
+			.delete-btn:hover {
+				color: var(--error-color);
+			}
+			
+			.no-history {
+				text-align: center;
+				padding: 40px 20px;
+				color: var(--text-secondary);
+				font-size: 15px;
+			}
+			
+			.no-history svg {
+				width: 50px;
+				height: 50px;
+				margin-bottom: 15px;
+				opacity: 0.5;
+			}
+			
+			/* 图标样式 */
+			.icon {
+				width: 20px;
+				height: 20px;
+				display: inline-block;
+			}
+			
+			.icon-eye {
+				fill: var(--text-secondary);
+			}
+			
+			.icon-eye-slash {
+				fill: var(--text-secondary);
+			}
+			
+			.icon-check {
+				fill: var(--success-color);
+			}
+			
+			.icon-error {
+				fill: var(--error-color);
+			}
+			
+			.icon-trash {
+				fill: currentColor;
+				width: 20px;
+				height: 20px;
+			}
+			
+			.icon-history {
+				fill: var(--text-secondary);
+				width: 40px;
+				height: 40px;
+			}
+			
+			/* 消息提示 */
+			.message {
+				display: none;
+				padding: 10px 16px;
+				border-radius: 5px;
+				font-size: 16px;
+				color: #90EE90;
+				margin-bottom: 10px;
+				background-color: #155724;
+			}
+		</style>
+	</head>
+	<body>
+		<window-header>
+			<style>
+				window-header {
+					position: fixed;
+					top: 0;
+					left: 0;
+					z-index: 99;
+					width: 100%;
+					min-height: 28px;
+					font-size: 0;
+					text-align: right;
+					-webkit-app-region: drag;
+				}
+				window-header div {
+					display: inline-block;
+					width:  28px;
+					height: 28px;
+					text-align: center;
+					-webkit-app-region: no-drag;
+				}
+				window-header div svg {
+					position: relative;
+					top: 5px;
+					width: 	16px;
+					height: 16px;
+					vertical-align: top;
+				}
+				window-header div svg path {
+					fill: #FFF;
+				}
+				window-header #minimize:hover {
+					background-color: #808080;
+				}
+				window-header #minimize:hover svg path {
+					fill: #FFFFFF;
+				}
+				window-header #maximize:hover {
+					background-color: #808080;
+				}
+				window-header #maximize:hover svg path {
+					fill: #FFFFFF;
+				}
+				window-header #restore:hover {
+					background-color: #808080;
+				}
+				window-header #restore:hover svg path {
+					fill: #FFFFFF;
+				}
+				window-header #close:hover {
+					background-color: #cc0000;
+				}
+				window-header #close:hover svg path {
+					fill: #FFFFFF;
+				}
+			</style>
+			<div id="minimize"><svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3730"><path d="M128 448h768v128H128z" p-id="3731"></path></svg></svg></div>
+			<div id="maximize"><svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3389"><path d="M199.111111 256v512h625.777778v-512z m56.888889 455.111111v-341.333333h512v341.333333z" p-id="3390"></path></svg></div>
+			<div id="restore" ><svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="3132"><path d="M512 1255.489906M865.682191 310.085948l-554.675195 0c-14.634419 0-26.403358 11.973616-26.403358 26.710374L284.603638 423.681791l-92.309414 0c-14.634419 0-26.403358 11.973616-26.403358 26.710374l0 349.998001c0 14.634419 11.768939 26.505697 26.403358 26.505697l554.675195 0c14.634419 0 26.710374-11.871277 26.710374-26.505697L773.679792 713.30002l92.002399 0c14.634419 0 26.710374-11.871277 26.710374-26.505697l0-349.998001C892.392564 322.059564 880.31661 310.085948 865.682191 310.085948zM728.65081 781.86688 210.817509 781.86688 210.817509 468.710774l517.8333 0L728.65081 781.86688zM847.363582 668.271037l-73.68379 0L773.679792 450.392165c0-14.634419-12.075954-26.710374-26.710374-26.710374L329.530282 423.681791l0-68.56686 517.8333 0L847.363582 668.271037z" p-id="3133"></path></svg></div>
+			<div id="close"   ><svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1501"><path d="M557.311759 513.248864l265.280473-263.904314c12.54369-12.480043 12.607338-32.704421 0.127295-45.248112-12.512727-12.576374-32.704421-12.607338-45.248112-0.127295L512.127295 467.904421 249.088241 204.063755c-12.447359-12.480043-32.704421-12.54369-45.248112-0.063647-12.512727 12.480043-12.54369 32.735385-0.063647 45.280796l262.975407 263.775299-265.151458 263.744335c-12.54369 12.480043-12.607338 32.704421-0.127295 45.248112 6.239161 6.271845 14.463432 9.440452 22.687703 9.440452 8.160624 0 16.319527-3.103239 22.560409-9.311437l265.216826-263.807983 265.440452 266.240344c6.239161 6.271845 14.432469 9.407768 22.65674 9.407768 8.191587 0 16.352211-3.135923 22.591372-9.34412 12.512727-12.480043 12.54369-32.704421 0.063647-45.248112L557.311759 513.248864z" fill="#575B66" p-id="1502"></path></svg></div>
+		</window-header>
+		
+		<main>
+			<div class="message" id="message"></div>
+			
+			<div class="container">
+				<!-- 左侧登录注册部分 -->
+				<section class="auth-section">
+					<!-- 共享地址输入框 -->
+					<div class="address-container">
+						<div class="address-input-wrapper">
+							<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+								<path d="M751.363033 256.47449c34.033441-4.145547 157.340981-67.81715 157.340981-67.817149 116.524827 153.435177 113.398186 302.724807 113.398186 302.724807H777.634811c9.389913-92.900205-26.271778-234.907658-26.271778-234.907658zM632.021232 16.881865C699.658575 9.070257 880.634167 145.843332 870.235338 155.223256c-10.398829 9.379924-132.098098 52.183943-132.098098 52.183943C713.184045 92.580548 632.021232 16.881865 632.021232 16.881865z m-97.764979 228.104966V0.709238c106.125997 41.785114 160.167945 221.312262 160.167945 221.312262-24.953195 12.566501-160.167945 22.96533-160.167945 22.965331zM329.35636 804.56572l153.914662-22.96533v241.150951c-107.134914-37.579631-153.914662-218.185621-153.914662-218.185621z m-43.892849-268.271817h197.807511v201.473573s-137.26255 7.342113-168.469027 22.965331c0 0-36.850415-141.957507-29.338484-224.438904z m28.259643-266.234006c38.538601 19.838689 169.547869 16.712048 169.547868 16.712047V491.372159H286.732148c-8.361018-70.993737 26.991006-221.312262 26.991006-221.312262zM483.271022 0.709238v244.287582l-159.089103-25.073066c0.009989 0 48.887484-173.283855 159.089103-219.214516zM280.478865 207.417189l-133.166949-54.291679C286.732148 25.782304 426.092445 2.816974 384.487138 23.674568c-41.595318 20.867584-104.008272 183.74262-104.008273 183.742621z m-37.45976 279.749487H0.000161c0-136.123773 114.057477-298.509336 114.057477-298.509335 29.098742 29.218613 156.022398 68.895991 156.022398 68.89599-27.060931 56.339479-27.060931 229.613345-27.060931 229.613345z m27.060931 287.151537C219.094805 779.55259 115.076544 840.097551 115.076544 840.097551 11.068271 729.406458 0.000161 536.293903 0.000161 536.293903H239.892464c-3.306448 66.788255 30.187572 238.02431 30.187572 238.02431z m113.807746 238.034299c-124.396371-25.073066-239.652561-139.909706-239.652561-139.909706L284.444605 817.122232c11.237928 86.646922 99.443176 195.23028 99.443177 195.23028z m319.91634-742.292615c15.633207 26.091972 30.187572 221.322251 30.187571 221.322251H534.256253V288.87968c66.558502 11.48766 169.547869-18.819783 169.547869-18.819783z m2.107735 490.67291c-111.29045-27.180802-171.655604-18.819783-171.655604-18.819784V536.293903h199.73544c2.227607 72.262374-28.079836 224.438904-28.079836 224.438904z m-171.655604 262.018534V781.590401c38.478665 0 156.022398 22.975319 156.022398 22.975319-45.750854 188.967008-156.022398 218.185621-156.022398 218.185621z m199.855312-211.882392l138.22152 64.690509c-106.125997 124.216564-238.15417 131.548688-238.154171 131.548688C708.079529 946.573173 734.111565 817.122232 734.111565 817.122232v-6.253283z m43.523246-274.575046h244.467389c2.107736 180.546054-117.543732 302.784743-117.543733 302.784743-4.145547-12.566501-153.195435-69.984821-153.195434-69.984821 19.41914-14.614301 26.271778-232.799922 26.271778-232.799922z m0 0"></path>
+							</svg>
+							<input type="url" id="address" placeholder="请输入服务器地址">
+						</div>
+					</div>
+					
+					<div class="auth-tabs">
+						<button class="auth-tab active" id="loginTab">登录</button>
+						<button class="auth-tab" id="registerTab">注册</button>
+					</div>
+					
+					<!-- 登录表单 -->
+					<form class="auth-form" id="loginForm">
+						<div class="form-group">
+							<label for="loginUsername">用户名</label>
+							<input type="text" id="loginUsername" placeholder="请输入用户名" required>
+						</div>
+						
+						<div class="form-group">
+							<label for="loginPassword">密码</label>
+							<div class="password-input">
+								<input type="password" id="loginPassword" placeholder="请输入密码" required>
+								<button type="button" class="toggle-password" id="toggleLoginPassword">
+									<svg class="icon icon-eye" viewBox="0 0 24 24">
+										<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+									</svg>
+								</button>
+							</div>
+						</div>
+						
+						<button type="submit" class="primary-btn">登录</button>
+					</form>
+					
+					<!-- 注册表单 -->
+					<form class="auth-form" id="registerForm" style="display: none;">
+						<div class="form-group">
+							<label for="registerUsername">用户名</label>
+							<input type="text" id="registerUsername" placeholder="请输入用户名" required>
+						</div>
+						
+						<div class="form-group">
+							<label for="registerPassword">密码</label>
+							<div class="password-input">
+								<input type="password" id="registerPassword" placeholder="请输入密码" required>
+								<button type="button" class="toggle-password" id="toggleRegisterPassword">
+									<svg class="icon icon-eye" viewBox="0 0 24 24">
+										<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+									</svg>
+								</button>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label for="confirmPassword">确认密码</label>
+							<div class="password-input">
+								<input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+								<button type="button" class="toggle-password" id="toggleConfirmPassword">
+									<svg class="icon icon-eye" viewBox="0 0 24 24">
+										<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+									</svg>
+								</button>
+							</div>
+						</div>
+						
+						<button type="submit" class="primary-btn">注册</button>
+					</form>
+				</section>
+				
+				<!-- 右侧历史记录部分 -->
+				<section class="history-section">
+					<div class="history-header">
+						<h2 class="history-title">历史记录</h2>
+					</div>
+					
+					<div class="history-list" id="historyList">
+						<!-- 历史记录将通过JavaScript动态生成 -->
+						<div class="no-history" id="noHistoryMessage">
+							<svg class="icon-history" viewBox="0 0 24 24">
+								<path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+							</svg>
+							<p>暂无历史记录</p>
+							<p>保存的地址将显示在这里</p>
+						</div>
+					</div>
+				</section>
+			</div>
+		</main>
+		
+		<script>
+			// 元素获取
+			const loginTab = document.getElementById('loginTab');
+			const registerTab = document.getElementById('registerTab');
+			const loginForm = document.getElementById('loginForm');
+			const registerForm = document.getElementById('registerForm');
+			const addressInput = document.getElementById('address');
+			const historyList = document.getElementById('historyList');
+			const noHistoryMessage = document.getElementById('noHistoryMessage');
+			const historyCount = document.getElementById('historyCount');
+			const message = document.getElementById('message');
+			
+			// SVG图标定义
+			const svgIcons = {
+				eye: `<svg class="icon icon-eye" viewBox="0 0 24 24" width="16" height="16">
+						<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+					  </svg>`,
+				eyeSlash: `<svg class="icon icon-eye-slash" viewBox="0 0 24 24" width="16" height="16">
+							<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>
+						  </svg>`,
+				trash: `<svg class="icon icon-trash" viewBox="0 0 24 24" width="14" height="14">
+						  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+						</svg>`
+			};
+			
+			// 切换登录/注册表单
+			loginTab.addEventListener('click', () => switchAuthForm('login'));
+			registerTab.addEventListener('click', () => switchAuthForm('register'));
+			
+			// 表单提交事件
+			loginForm.addEventListener('submit', handleLogin);
+			registerForm.addEventListener('submit', handleRegister);
+			
+			// 密码显示/隐藏功能设置
+			function setupPasswordToggle(toggleId, passwordId) {
+				const toggleBtn = document.getElementById(toggleId);
+				const passwordInput = document.getElementById(passwordId);
+				
+				toggleBtn.addEventListener('click', function() {
+					const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+					passwordInput.setAttribute('type', type);
+					
+					// 切换图标
+					const icon = this.querySelector('svg');
+					const isEye = icon.classList.contains('icon-eye');
+					
+					if (isEye) {
+						this.innerHTML = svgIcons.eyeSlash;
+					} else {
+						this.innerHTML = svgIcons.eye;
+					}
+				});
+			}
+			
+			// 切换登录/注册表单
+			function switchAuthForm(formType) {
+				if (formType === 'login') {
+					loginTab.classList.add('active');
+					registerTab.classList.remove('active');
+					loginForm.style.display = 'flex';
+					registerForm.style.display = 'none';
+				} else {
+					loginTab.classList.remove('active');
+					registerTab.classList.add('active');
+					loginForm.style.display = 'none';
+					registerForm.style.display = 'flex';
+				}
+				
+				// 隐藏消息
+				hideMessages();
+			}
+			
+			// 处理登录
+			function handleLogin(e) {
+				e.preventDefault();
+				
+				const username = document.getElementById('loginUsername').value;
+				const password = document.getElementById('loginPassword').value;
+				const address = addressInput.value;
+				
+				// 简单的验证
+				if (!username || !password || !address) {
+					showMessage('请填写所有必填字段');
+					return;
+				}
+				
+				if (!isValidUrl(address)) {
+					showMessage('请输入有效的地址');
+					return;
+				}
+				
+				fetch(`${address}/weiw/index.php?mods=mc_login&name=${username}&password=${password}`)
+					.then(response => response.json())
+					.then(result => {
+						if (result.success === 'ok')
+						{
+							localStorage.setItem('address', address);
+							localStorage.setItem('token', result.token);
+							addToServers(address, result.name);
+							window.location.replace(`${address}/weiw/index.php?mods=mc_verify_token&token=${result.token}`);
+						}
+						else
+						{
+							showMessage(result.error);
+						}
+					})
+					.catch(error => {
+						showMessage(`ERROR: ${error}`);
+					});
+			}
+			
+			// 处理注册
+			function handleRegister(e) {
+				e.preventDefault();
+				
+				const username = document.getElementById('registerUsername').value;
+				const password = document.getElementById('registerPassword').value;
+				const confirmPassword = document.getElementById('confirmPassword').value;
+				const address = addressInput.value;
+				
+				// 简单的验证
+				if (!username || !password || !confirmPassword || !address) {
+					showMessage('请填写所有必填字段');
+					return;
+				}
+				
+				if (password !== confirmPassword) {
+					showMessage('两次输入的密码不一致');
+					return;
+				}
+				
+				if (!isValidUrl(address)) {
+					showMessage('请输入有效的地址');
+					return;
+				}
+				
+				fetch(`${address}/weiw/index.php?mods=mc_register&name=${username}&password=${password}`)
+					.then(response => response.json())
+					.then(result => {
+						if (result.success === 'ok')
+						{
+							localStorage.setItem('address', address);
+							localStorage.setItem('token', result.token);
+							addToServers(address, result.name);
+							window.location.replace(`${address}/weiw/index.php?mods=mc_verify_token&token=${result.token}`);
+						}
+						else
+						{
+							showMessage(result.error);
+						}
+					})
+					.catch(error => {
+						showMessage(`ERROR: ${error}`);
+					});
+			}
+			
+			// 验证URL格式
+			function isValidUrl(string) {
+				try {
+					new URL(string);
+					return true;
+				} catch (_) {
+					return false;
+				}
+			}
+			
+			// 显示消息
+			let messagetimerId = null;
+			function showMessage(text, timer=true) {
+				message.textContent = text;
+				message.style.display = 'block';
+				
+				if (timer) {
+					clearTimeout(messagetimerId);
+					messagetimerId = setTimeout(function() {
+						message.style.display = 'none';
+					}, 3000);
+				}
+			}
+			
+			// 历史记录相关功能
+			function loadHistory() {
+				const history = getServersFromStorage();
+				
+				if (history.length === 0) {
+					noHistoryMessage.style.display = 'block';
+				} else {
+					noHistoryMessage.style.display = 'none';
+				}
+				
+				// 清空历史列表（除了无历史消息）
+				const items = historyList.querySelectorAll('.history-item');
+				items.forEach(item => item.remove());
+				
+				// 添加历史记录项
+				history.forEach((item, index) => {
+					html = `
+						<div class="history-item" onclick="addressInput.value = '${item.address}'">
+							<div>
+								<div class="history-name">${item.name}</div>
+								<div class="history-address">${item.address}</div>
+							</div>
+							<div class="action-buttons">
+								<button class="action-btn" onclick="deleteServersItem(${index})">
+									${svgIcons.trash}
+								</button>
+							</div>
+						</div>
+					`;
+					
+					historyList.insertAdjacentHTML('beforeend', html);
+				});
+			}
+			
+			// 删除单个历史记录项
+			function deleteServersItem(index) {
+				const history = getServersFromStorage();
+				
+				if (index >= 0 && index < history.length) {
+					// 从数组中删除指定项
+					history.splice(index, 1);
+					
+					// 保存到localStorage
+					localStorage.setItem('servers', JSON.stringify(history));
+					
+					// 重新加载历史记录
+					loadHistory();
+				}
+			}
+			
+			// 添加到历史记录
+			function addToServers(address, name) {
+				const history = getServersFromStorage();
+				
+				// 检查是否已存在相同的地址
+				const existingIndex = history.findIndex(item => item.address === address);
+				if (existingIndex !== -1) {
+					// 如果已存在，更新来源
+					history[existingIndex].name = name;
+				} else {
+					// 否则添加新记录
+					history.unshift({
+						address,
+						name
+					});
+				}
+				
+				// 保存到localStorage
+				localStorage.setItem('servers', JSON.stringify(history));
+				
+				// 重新加载历史记录
+				loadHistory();
+			}
+			
+			// 从localStorage获取历史记录
+			function getServersFromStorage() {
+				const historyStr = localStorage.getItem('servers');
+				return historyStr ? JSON.parse(historyStr) : [];
+			}
+			
+			document.addEventListener('DOMContentLoaded', function() {
+				const code    = new URLSearchParams(window.location.search).get('code');
+				const address = localStorage.getItem('address');
+				const token   = localStorage.getItem('token');
+				
+				if (code) {
+					if (code == 401) {
+						localStorage.removeItem('token')
+						showMessage(`认证凭据失效，状态码：${code}`, false);
+					} else {
+						showMessage(`连接服务器失败，状态码：${code}`, false);
+					}
+				}
+				
+				if (address) {
+					addressInput.value = address;
+				}
+				
+				if (address && token && !code) {
+					window.location.replace(`${address}/weiw/index.php?mods=mc_verify_token&token=${token}`);
+				}
+				
+				
+				// 密码显示/隐藏功能
+				setupPasswordToggle('toggleLoginPassword', 'loginPassword');
+				setupPasswordToggle('toggleRegisterPassword', 'registerPassword');
+				setupPasswordToggle('toggleConfirmPassword', 'confirmPassword');
+				
+				// 初始化：显示历史记录
+				loadHistory();
+			});
+		</script>
+	</body>
+</html>

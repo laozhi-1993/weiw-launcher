@@ -1,6 +1,6 @@
 const { app, ipcMain, shell, dialog } = require('electron');
-const path  = require('path');
-const fs    = require('fs');
+const path = require('path');
+const fs   = require('fs');
 
 
 	global.load = function (name)
@@ -28,8 +28,9 @@ const MinecraftLauncher     = load('minecraft-launcher');
 
 function main()
 {
-	const config = JSON.parse(fs.readFileSync('config.json','utf-8'));
-	const mainWindows = new Windows(config.url, 1100, 800);
+	let minecraft = null;
+	let minecraftLauncher = null;
+	const mainWindows = new Windows("html/auth.html", 1100, 800);
 	
 	
 	app.on('second-instance', () => {
@@ -37,10 +38,30 @@ function main()
 		mainWindows.window.focus();
 	});
 	
-	
 	mainWindows.window.once('closed', () => {
 		closeAll();
 	});
+	
+	mainWindows.window.webContents.on('did-frame-navigate', (...args) => {
+		if (args[2] === 200) {
+			return;
+		}
+		
+		if (args[2] === -1) {
+			return;
+		}
+		
+		mainWindows.window.loadFile('html/auth.html', {query: {code: args[2]}});
+	});
+	
+	mainWindows.window.webContents.on('did-fail-load', (event, errorCode) => {
+		if (errorCode === -3) {
+			return;
+		}
+		
+		mainWindows.window.loadFile('html/auth.html', {query: {code: errorCode}});
+	});
+	
 	
 	mainWindows.window.webContents.on('did-frame-finish-load', () => {
 		if (minecraftLauncher) {
@@ -62,10 +83,6 @@ function main()
 		
 		mainWindows.sendEvent('version', app.getVersion());
 	});
-	
-	
-	let minecraft = null;
-	let minecraftLauncher = null;
 	
 	
 	ipcMain.on('open', (event, message) => {
@@ -107,7 +124,7 @@ function main()
 		
 		try
 		{
-			minecraft.game.size(config.width, config.height);
+			minecraft.game.size(954, 580);
 			minecraft.jvm.auth(message[0].authPath, message[0].authServerUrl);
 			
 			for(const value of message[0].jvm) {

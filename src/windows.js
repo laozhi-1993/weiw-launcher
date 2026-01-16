@@ -8,48 +8,17 @@ const path = require('path');
 		}
 	}
 
-	class TimeoutLatch
-	{
-		constructor(time)
-		{
-			this.time = time;
-			
-			this.toggle = false;
-			this.timerId = false;
-			this.callback = false;
-		}
-		
-		start()
-		{
-			clearTimeout(this.timerId);
-			
-			this.timerId = setTimeout(() => {
-				if (this.callback) {
-					this.callback();
-				} else {
-					this.toggle = true;
-				}
-			}, this.time);
-			
-			this.toggle = false;
-			this.callback = false;
-		}
-		
-		done(callback)
-		{
-			if (this.toggle) {
-				callback();
-			} else {
-				this.callback = callback;
-			}
-		}
-	}
-
 	class Windows
 	{
 		constructor(setURL, setWidth, setHeight)
 		{
-			this.timeoutLatch = new TimeoutLatch(600);
+			this.timerId = null;
+			this.view = new WebContentsView({
+				webPreferences: {
+					preload: path.join(__dirname, 'windowsPreload.js')
+				}
+			});
+			
 			
 			this.window = new BrowserWindow({
 				width: setWidth,
@@ -63,43 +32,40 @@ const path = require('path');
 				}
 			});
 			
-			this.view = new WebContentsView({
-				webPreferences: {
-					preload: path.join(__dirname, 'windowsPreload.js')
+			
+			this.window.webContents.loadURL("about:blank");
+			this.window.webContents.once('dom-ready', () => {
+				if (setURL.startsWith('http')) {
+					this.window.loadURL(setURL);
+				} else {
+					this.window.loadFile(setURL);
 				}
+				
+				setTimeout(() => {
+					this.window.show();
+				}, 200);
 			});
-			this.view.webContents.loadURL("about:blank");
-			this.view.webContents.once('dom-ready', this.window.show.bind(this.window));
 			
 			
-			this.window.webContents.on('did-start-navigation', (event) => {
-				if (!event.isSameDocument && event.isMainFrame) {
-					this.timeoutLatch.start();
+			this.window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
+				if (!event.isSameDocument && isMainFrame && url.startsWith('http')) {
 					this.add('html/load.html');
 				}
 			});
 			
-			this.window.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
-				if (isMainFrame) {
-					this.timeoutLatch.done(() => {
-						this.add('html/load_error.html');
-					});
+			
+			this.window.webContents.on('did-frame-navigate', (event, url, httpResponseCode, httpStatusText, isMainFrame) => {
+				if (!event.isSameDocument && isMainFrame && url.startsWith('http')) {
+					clearTimeout(this.timerId);
+					this.timerId = setTimeout(() => {
+						this.remove();
+					}, 600);
 				}
 			});
 			
-			this.window.webContents.on('did-navigate', (event, url, httpResponseCode, httpStatusText) => {
-				if (httpResponseCode === 200) {
-					this.timeoutLatch.done(() => {
-						this.remove();
-					});
-					return;
-				}
-				
-				this.timeoutLatch.done(() => {
-					this.add('html/load_code.html', () => {
-						this.sendEvent('code', httpResponseCode);
-					});
-				});
+			
+			this.window.webContents.on('did-fail-load', () => {
+				this.remove();
 			});
 			
 			
@@ -109,7 +75,6 @@ const path = require('path');
 			this.window.on('minimize',   () => this.resize());
 			this.window.on('unmaximize', () => this.resize());
 			this.window.on('restore',    () => this.resize());
-			this.window.loadURL(setURL);
 		}
 		
 		add(setFile, callback = () => {})
