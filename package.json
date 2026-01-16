@@ -1,5 +1,5 @@
 {
-	"name": "weiw-launcher1",
+	"name": "weiw-launcher",
 	"version": "1.4.0",
 	"main": "src/index.js",
 	"build": {
