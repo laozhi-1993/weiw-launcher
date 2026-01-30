@@ -191,10 +191,20 @@ class FileDownload
 	{
 		return new Promise((resolve, reject) => {
 			this.request = this.getRequest((response) => {
-				if (response.statusCode === 301 || response.statusCode === 302)
-				{
+				if (
+					response.statusCode === 301 ||
+					response.statusCode === 302 ||
+					response.statusCode === 303 ||
+					response.statusCode === 307 ||
+					response.statusCode === 308
+				){
 					this.downloadUrl = response.headers.location;
-					return this.start();
+					this.start(speed, progress)
+						.then(resolve)
+						.catch(reject);
+					
+					
+					return;
 				}
 				
 				if (response.statusCode === 200)
