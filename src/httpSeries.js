@@ -306,7 +306,7 @@ function taskDownloads(task, downloads, title, threadCount = 20)
 	
 	if (list.length !== 0)
 	{
-		return task.start('html/task_downloadFiles.html', (resolve, reject) => {
+		return task.start('html/task_downloads.html', (resolve, reject) => {
 			
 			task.sendEvent('operation', title);
 			
@@ -344,9 +344,60 @@ function taskDownloads(task, downloads, title, threadCount = 20)
 	}
 }
 
+function taskDownloadAssets(task, downloads, title, threadCount = 20)
+{
+	let list = [];
+	
+	for(const value of downloads) {
+		if (!list.some(item => item.path === value.path))
+		{
+			if(!fs.existsSync(value.path)) {
+				list.push(value);
+				continue;
+			}
+			
+			if(value.time >= Math.floor(fs.statSync(value.path).mtimeMs / 1000)) {
+				list.push(value);
+				continue;
+			}
+		}
+	}
+	
+	if (list.length !== 0)
+	{
+		return task.start('html/task_download_assets.html', (resolve, reject) => {
+			
+			task.sendEvent('operation', title);
+			
+			const speed = new Speed((size) => task.sendEvent('speed', size));
+			const fileDownloads = new FileDownloads(threadCount);
+			
+			
+			fileDownloads.on('progress', (total, complete) => {
+				task.sendEvent('progress', {'total': total, 'complete': complete});
+			});
+			
+			
+			
+			for (const value of list) {
+				fileDownloads.add(value.url, value.path);
+			}
+			
+			fileDownloads.start(speed)
+				.then(() => resolve())
+				.catch(() => reject(`有 ${fileDownloads.failure} 个文件下载失败请重新尝试下载`));
+			
+			return function() {
+				speed.stop();
+				fileDownloads.stop();
+			};
+		});
+	}
+}
+
 function taskDownload(task, url, title, failure, callback)
 {
-	return task.start('html/task_downloadFile.html', (resolve, reject) => {
+	return task.start('html/task_download.html', (resolve, reject) => {
 		
 		task.sendEvent('operation', title);
 		
@@ -369,6 +420,7 @@ function taskDownload(task, url, title, failure, callback)
 
 	module.exports = {
 		FileDownloads,
+		taskDownloadAssets,
 		FileDownload,
 		Speed,
 		taskDownloads,

@@ -16,8 +16,8 @@ const fs   = require('fs');
 
 
 const { Windows, closeAll } = load('windows');
+const { taskDownloads }     = load('httpSeries');
 const CheckJava             = load('checkJava');
-const FileManager           = load('fileManager');
 const Minecraft             = load('minecraft');
 const MinecraftCore         = load('minecraft-core');
 const MinecraftFabric       = load('minecraft-fabric');
@@ -70,17 +70,6 @@ function main()
 			mainWindows.sendEvent('exit');
 		}
 		
-		mainWindows.sendEvent('jvm', [
-			'-Xmx6G',
-			'-XX:+UseG1GC',
-			'-XX:-UseAdaptiveSizePolicy',
-			'-XX:-OmitStackTraceInFastThrow',
-			'-Dfml.ignoreInvalidMinecraftCertificates=true',
-			'-Dfml.ignorePatchDiscrepancies=true',
-			'-Djdk.lang.Process.allowAmbiguousCommands=true',
-			'-Dlog4j2.formatMsgNoLookups=true',
-		]);
-		
 		mainWindows.sendEvent('version', app.getVersion());
 	});
 	
@@ -100,32 +89,20 @@ function main()
 		}
 		
 		
-		minecraft = new Minecraft(path.resolve(message[0].name));
-		minecraft.launcherName(app.getName());
-		minecraft.launcherVersion(app.getVersion());
-		minecraft.version(message[0].version);
-		minecraft.uuid(message[0].uuid);
-		minecraft.userName(message[0].username);
-		minecraft.accessToken(message[0].accessToken);
-		
-		
 		try
 		{
-			const checkJava = new CheckJava();
-			await checkJava.checkJavaVersion(minecraft);
-		}
-		catch
-		{
-			minecraft = null;
-			minecraftLauncher = null;
-			
-			return;
-		}
-		
-		try
-		{
-			minecraft.game.size(954, 580);
+			minecraft = new Minecraft(path.resolve(message[0].name));
+			minecraft.launcherName(app.getName());
+			minecraft.launcherVersion(app.getVersion());
+			minecraft.version(message[0].version);
+			minecraft.uuid(message[0].uuid);
+			minecraft.userName(message[0].username);
+			minecraft.accessToken(message[0].accessToken);
 			minecraft.jvm.auth(message[0].authPath, message[0].authServerUrl);
+			
+			for(const value of message[0].game) {
+				minecraft.game.add(value);
+			}
 			
 			for(const value of message[0].jvm) {
 				minecraft.jvm.add(value);
@@ -137,14 +114,27 @@ function main()
 				minecraft.jvm.add('-Dstderr.encoding=UTF-8');
 			}
 			
+			if (message[0].downloads) {
+				const extraFiles = [];
+				
+				for (const download of message[0].downloads) {
+					extraFiles.push({
+						'url': download.url,
+						'time':download.time,
+						'path': minecraft.getRootDir(download.path)
+					});
+				}
+				
+				await taskDownloads(mainWindows, extraFiles, '下载额外文件');
+			}
 			
-			const fileManager = new FileManager(minecraft);
-			await fileManager.clearUnwantedMods(message[0].mods);
-			await fileManager.downloadFiles(mainWindows, message[0].downloads);
 			
+			const checkJava = new CheckJava();
+			await checkJava.checkJavaVersion(minecraft);
 			
 			const minecraftCore = new MinecraftCore(minecraft);
 			await minecraftCore.setup(mainWindows);
+			await minecraftCore.cleanMods(message[0].mods);
 			await minecraftCore.generateServers(message[0].server);
 			await minecraftCore.generateConfig();
 			

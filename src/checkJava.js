@@ -101,7 +101,7 @@ module.exports = class
 				minecraft.java(javaPath);
 			}).catch(() => {
 				this.showMessage(`当前我的世界版本需要java8才可以运行，是否打开 ${this.javaUrlV1} 地址进行下载？`, this.javaUrlV1);
-				throw('');
+				throw('stop');
 			});
 		}
 		else
@@ -110,7 +110,7 @@ module.exports = class
 				minecraft.java(javaPath);
 			}).catch(() => {
 				this.showMessage(`当前我的世界版本需要java17或更高才可以运行，是否打开 ${this.javaUrlV2} 地址进行下载？`, this.javaUrlV2);
-				throw('');
+				throw('stop');
 			});
 		}
 	}

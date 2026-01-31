@@ -1,7 +1,7 @@
 const path = require('path');
 const fs   = require('fs');
 const { decode, encode } = require('nbt-ts');
-const { taskDownloads, taskDownload } = load('httpSeries');
+const { taskDownloads, taskDownloadAssets, taskDownload } = load('httpSeries');
 
 
 module.exports = class
@@ -259,6 +259,41 @@ module.exports = class
 	}
 	
 	
+	cleanMods(mods)
+	{
+		if (!mods) return;
+		
+		// 把白名单全部转小写，便于忽略大小写比较
+		const allowedSet = new Set(
+			mods.map(name => name.toLowerCase())
+		);
+
+		const currentDir = this.minecraft.getRootDir("mods");
+
+		try {
+			const entries = fs.readdirSync(currentDir, { withFileTypes: true });
+			
+			try {
+				for (const entry of entries) {
+					if (!entry.isFile()) continue;
+
+					const filename = entry.name;
+					const lowerName = filename.toLowerCase();
+
+					// 只处理 .jar 文件
+					if (!lowerName.endsWith('.jar')) continue;
+
+					if (!allowedSet.has(lowerName)) {
+						fs.unlinkSync(path.join(currentDir, filename));
+					}
+				}
+			} catch (err) {
+				throw('检查模组失败：' + err.message);
+			}
+		} catch {}
+	}
+	
+	
 	async setup(task)
 	{
 		if (!fs.existsSync(this.minecraft.getVersionJsonPath()))
@@ -303,7 +338,7 @@ module.exports = class
 		}
 		
 		
-		await taskDownloads(task, assets, '下载资源文件');
+		await taskDownloadAssets(task, assets, '下载资源文件');
 		await taskDownloads(task, downloads, '下载依赖库');
     }
 }
