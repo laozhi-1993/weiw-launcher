@@ -1,7 +1,7 @@
-const https = require('https');
-const http  = require('http');
-const fs    = require('fs');
-const path  = require('path');
+const got  = require('got').default;
+const fs   = require('fs');
+const path = require('path');
+
 
 
 class FileDownloads
@@ -98,8 +98,8 @@ class FileDownloads
 				
 				fileDownload.start(speed, (...args) => this.trigger('data', readyToDownloadFile.id, ...args))
 				
-				.then(() => {
-					fileDownload.saveToFile(readyToDownloadFile.path);
+				.then((data) => {
+					data.saveToFile(readyToDownloadFile.path);
 					
 					this.success++;
 					this.trigger('success', readyToDownloadFile.id);
@@ -128,118 +128,92 @@ class FileDownloads
 	}
 }
 
-
 class FileDownload
 {
-    constructor(downloadUrl, savePath)
-    {
+	constructor(downloadUrl) 
+	{
 		this.downloadUrl = downloadUrl;
 		this.request = null;
-		
-		
-		this.totalBytes       = 0;
-		this.downloadedBytes  = 0;
-		this.downloadedChunks = [];
-    }
+		this.transferred = 0;
+		this.controller = new AbortController();
+	}
 	
-	
-	saveToFile(savePath)
+	static data = class
 	{
-		try {
-			if(!fs.existsSync(path.dirname(savePath))) {
-				fs.mkdirSync(path.dirname(savePath), { recursive: true });
+		constructor(buffer) 
+		{
+			this.buffer = buffer;
+		}
+		
+		saveToFile(savePath)
+		{
+			try {
+				if (!fs.existsSync(path.dirname(savePath))) {
+					fs.mkdirSync(path.dirname(savePath), { recursive: true });
+				}
+				fs.writeFileSync(savePath, this.buffer);
+			} catch (error) {
+				throw error;
 			}
-			
-			fs.writeFileSync(savePath, Buffer.concat(this.downloadedChunks));
 		}
-		catch (error) {
-			throw error;
-		}
-	}
-	
-	
-	dataToJson(encoding = 'utf-8')
-	{
-		try {
-			return JSON.parse(Buffer.concat(this.downloadedChunks).toString(encoding));
-		} catch (error) {
-			throw error;
-		}
-	}
-	
-	
-	getRequest(callback)
-	{
-		if (this.downloadUrl.toLowerCase().startsWith('https:'))
+		
+		dataToJson(encoding = 'utf-8')
 		{
-			return https.get(this.downloadUrl, callback);
-		}
-		else
-		{
-			return  http.get(this.downloadUrl, callback);
+			try {
+				return JSON.parse(this.buffer.toString(encoding));
+			} catch (error) {
+				throw error;
+			}
 		}
 	}
-	
 	
 	stop()
 	{
-		this.request && this.request.abort();
+		if (this.request) {
+			this.controller.abort();
+		}
 	}
-	
 	
 	start(speed, progress)
 	{
 		return new Promise((resolve, reject) => {
-			this.request = this.getRequest((response) => {
-				if (
-					response.statusCode === 301 ||
-					response.statusCode === 302 ||
-					response.statusCode === 303 ||
-					response.statusCode === 307 ||
-					response.statusCode === 308
-				){
-					this.downloadUrl = response.headers.location;
-					this.start(speed, progress)
-						.then(resolve)
-						.catch(reject);
-					
-					
-					return;
+			this.request = got(this.downloadUrl, {
+				signal: this.controller.signal,
+				responseType: 'buffer',
+
+				headers: {
+					'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+					'accept': '*/*',
+					'connection': 'keep-alive'
+				},
+
+				retry: {
+					limit: 5
 				}
-				
-				if (response.statusCode === 200)
-				{
-					this.totalBytes = parseInt(response.headers['content-length'], 10);
-					
-					
-					response.on('data', (chunk) => {
-						this.downloadedBytes += chunk.length;
-						this.downloadedChunks.push(chunk);
-						
-						
-						if (speed)
-						{
-							speed.addBytes(chunk.length);
-						}
-						
-						
-						if (progress)
-						{
-							progress(this.totalBytes, this.downloadedBytes);
-						}
-					});
-					
-					response.on('end', () => resolve(this));
-					response.on('error', (error) => reject(new Error(error)));
-				}
-				else reject(new Error(response.statusCode));
 			});
 			
-			this.request.on('error', (error) => reject(new Error(error)));
+			this.request.on('downloadProgress', ({ transferred, total, percent }) => {
+				if (progress) {
+					progress(total, transferred);
+				}
+				
+				if (speed) {
+					speed.addBytes(transferred-this.transferred);
+				}
+				
+				this.transferred = transferred;
+			});
+			
+			this.request.then(response => {
+				resolve(new FileDownload.data(response.body));
+			});
+			
+			this.request.catch(error => {
+				reject(error);
+			});
 		});
 	}
 }
-
 
 class Speed
 {
@@ -334,7 +308,7 @@ function taskDownloads(task, downloads, title, threadCount = 20)
 			
 			fileDownloads.start(speed)
 				.then(() => resolve())
-				.catch(() => reject(`有 ${fileDownloads.failure} 个文件下载失败请重新尝试下载`));
+				.catch((error) => reject(error));
 			
 			return function() {
 				speed.stop();
@@ -385,7 +359,7 @@ function taskDownloadAssets(task, downloads, title, threadCount = 20)
 			
 			fileDownloads.start(speed)
 				.then(() => resolve())
-				.catch(() => reject(`有 ${fileDownloads.failure} 个文件下载失败请重新尝试下载`));
+				.catch((error) => reject(error));
 			
 			return function() {
 				speed.stop();
@@ -408,7 +382,7 @@ function taskDownload(task, url, title, failure, callback)
 		fileDownload.start(speed, (total, complete) => task.sendEvent('progress', {'total': total, 'complete': complete}))
 			.then(callback)
 			.then(() => resolve())
-			.catch(() => reject(failure));
+			.catch((error) => reject(failure));
 		
 		return function() {
 			speed.stop();

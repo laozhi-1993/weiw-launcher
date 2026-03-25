@@ -8,7 +8,7 @@ module.exports = class
 {
     constructor() {
 		this.javaUrlV1 = 'https://www.java.com/zh-CN/download/';
-		this.javaUrlV2 = 'https://download.oracle.com/java/21/latest/jdk-21_windows-x64_bin.exe';
+		this.javaUrlV2 = 'https://download.oracle.com/java/25/latest/jdk-25_windows-x64_bin.exe';
     }
 	
 	getPath(item) {
@@ -60,7 +60,7 @@ module.exports = class
 				items.forEach(item => {
 					const version = path.basename(item.key).split('.')[0];
 					
-					if (version < 17) {
+					if (version < 25) {
 						return;
 					}
 					
@@ -109,7 +109,7 @@ module.exports = class
 			return this.getJavaV2().then((javaPath) => {
 				minecraft.java(javaPath);
 			}).catch(() => {
-				this.showMessage(`当前我的世界版本需要java17或更高才可以运行，是否打开 ${this.javaUrlV2} 地址进行下载？`, this.javaUrlV2);
+				this.showMessage(`当前我的世界版本需要java25或更高才可以运行，是否打开 ${this.javaUrlV2} 地址进行下载？`, this.javaUrlV2);
 				throw('stop');
 			});
 		}

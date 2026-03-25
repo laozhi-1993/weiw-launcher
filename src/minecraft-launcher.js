@@ -48,7 +48,7 @@ module.exports = class
     {
 		this.minecraft.natives.extract();
 		this.process = spawn(this.minecraft.java(), this.minecraft.launchArgs().get(), {cwd: this.minecraft.getRootDir()});
-		
+		this.generateRunFile();
 		
 		this.process.stdout.on('data', (data) => {
 			if (data.toString().includes("Setting user:")) {
