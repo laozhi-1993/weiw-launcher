@@ -130,9 +130,9 @@ class FileDownloads
 
 class FileDownload
 {
-	constructor(downloadUrl) 
+	constructor(url) 
 	{
-		this.downloadUrl = downloadUrl;
+		this.url = url;
 		this.request = null;
 		this.transferred = 0;
 		this.controller = new AbortController();
@@ -177,7 +177,7 @@ class FileDownload
 	start(speed, progress)
 	{
 		return new Promise((resolve, reject) => {
-			this.request = got(this.downloadUrl, {
+			this.request = got(this.url, {
 				signal: this.controller.signal,
 				responseType: 'buffer',
 
