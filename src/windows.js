@@ -18,6 +18,7 @@ const path = require('path');
 					preload: path.join(__dirname, 'windowsPreload.js')
 				}
 			});
+			this.view.setBackgroundColor('#00000000');
 			
 			
 			this.window = new BrowserWindow({
@@ -35,27 +36,30 @@ const path = require('path');
 			
 			this.window.webContents.loadURL("about:blank");
 			this.window.webContents.once('dom-ready', () => {
-				if (setURL.startsWith('http')) {
-					this.window.loadURL(setURL);
-				} else {
-					this.window.loadFile(setURL);
-				}
-				
 				setTimeout(() => {
 					this.window.show();
 				}, 200);
+				
+				
+				setURL.startsWith('http') ? this.window.loadURL(setURL) : this.window.loadFile(setURL);
 			});
 			
 			
-			this.window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
-				if (!event.isSameDocument && isMainFrame && url.startsWith('http')) {
-					this.add('html/load.html');
+			this.window.webContents.on('will-navigate', (event, url) => {
+				event.preventDefault();
+				
+				if (url.startsWith('http'))
+				{
+					this.add('html/load.html', () => {
+						this.window.webContents.loadURL(url);
+					});
 				}
 			});
 			
 			
-			this.window.webContents.on('did-frame-navigate', (event, url, httpResponseCode, httpStatusText, isMainFrame) => {
-				if (!event.isSameDocument && isMainFrame && url.startsWith('http')) {
+			this.window.webContents.on('did-navigate', (event, url) => {
+				if (url.startsWith('http'))
+				{
 					clearTimeout(this.timerId);
 					this.timerId = setTimeout(() => {
 						this.remove();
@@ -86,9 +90,9 @@ const path = require('path');
 		
 		remove()
 		{
-			this.view.webContents.forcefullyCrashRenderer();
-			this.view.webContents.loadURL("about:blank");
 			this.window.contentView.removeChildView(this.view);
+			this.view.webContents.loadURL("about:blank");
+			this.view.webContents.forcefullyCrashRenderer();
 		}
 		
 		resize()

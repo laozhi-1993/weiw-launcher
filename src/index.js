@@ -114,6 +114,11 @@ function main()
 				minecraft.jvm.add('-Dstderr.encoding=UTF-8');
 			}
 			
+			
+			const checkJava = new CheckJava();
+			await checkJava.checkJavaVersion(minecraft);
+			
+			
 			if (message[0].downloads) {
 				const extraFiles = [];
 				
@@ -128,9 +133,6 @@ function main()
 				await taskDownloads(mainWindows, extraFiles, '下载额外文件');
 			}
 			
-			
-			const checkJava = new CheckJava();
-			await checkJava.checkJavaVersion(minecraft);
 			
 			const minecraftCore = new MinecraftCore(minecraft);
 			await minecraftCore.setup(mainWindows);
