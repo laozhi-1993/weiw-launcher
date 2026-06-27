@@ -47,6 +47,7 @@ module.exports = class
 				downloads.push({
 					'url':  fileUrl,
 					'path': this.minecraft.getLibrariesDir(filePath),
+					'cachePath': path.posix.join("libraries", filePath),
 				});
 			}
 		}
@@ -59,6 +60,7 @@ module.exports = class
 				downloads.push({
 					'url':  fileUrl,
 					'path': this.minecraft.getLibrariesDir(filePath),
+					'cachePath': path.posix.join("libraries", filePath),
 				});
 			}
 			
@@ -73,7 +75,11 @@ module.exports = class
 	}
 	
 	getLoaderPath() {
-		return this.minecraft.getRootDir(path.basename(this.getLoaderUrl()));
+		return this.minecraft.getRootDir(this.getCachePath());
+	}
+	
+	getCachePath() {
+		return path.basename(this.getLoaderUrl());
 	}
 	
 	
@@ -154,9 +160,14 @@ module.exports = class
 	
 	async setup(task)
 	{
-		if (!fs.existsSync(this.getLoaderPath())) {
-			await taskDownload(task, this.getLoaderUrl(), '下载neoforge安装程序', '安装程序下载失败', f => f.saveToFile(this.getLoaderPath()));
-		}
+		const loaderUrl = {
+			'url': this.getLoaderUrl(),
+			'path': this.getLoaderPath(),
+			'cachePath': this.getCachePath(),
+			'title': '下载neoforge安装程序',
+			'failure': '安装程序下载失败',
+		};
+		await taskDownload(task, loaderUrl);
 		
 		const admZip = new AdmZip(this.getLoaderPath());
 		const installProfileEntry = admZip.getEntry('install_profile.json');

@@ -45,6 +45,7 @@ module.exports = class
 			downloads.push({
 				'url': fileUrl,
 				'path': this.minecraft.getLibrariesDir(filePath),
+				'cachePath': path.posix.join("libraries", filePath),
 			});
 			
 			libraries.push(filePath);
@@ -71,15 +72,17 @@ module.exports = class
 	
 	async setup(task)
 	{
-		const versionJsonUrl = path.posix.join('https://meta.fabricmc.net/v2/versions/loader/', this.minecraft.version(), this.getVersion(), 'profile', 'json');
-		const versionJsonPath = this.minecraft.getVersionsDir(this.getFabricId(), this.getFabricId() + '.json');
+		const versionPath = path.posix.join('versions', this.getFabricId(), this.getFabricId() + '.json');
+		const versionsUrl = {
+			'url': path.posix.join('https://meta.fabricmc.net/v2/versions/loader/', this.minecraft.version(), this.getVersion(), 'profile', 'json'),
+			'path': this.minecraft.getRootDir(versionPath),
+			'cachePath': versionPath,
+			'title': '获取fabric元数据',
+			'failure': '获取失败',
+		};
+		await taskDownload(task, versionsUrl);
 		
-		if (!fs.existsSync(versionJsonPath)) {
-			await taskDownload(task, versionJsonUrl, '获取fabric元数据', '获取失败', f => f.saveToFile(versionJsonPath));
-		}
-		
-		
-		const versionData = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
+		const versionData = JSON.parse(fs.readFileSync(versionsUrl.path, 'utf8'));
 		const { downloads, libraries } = this.getLibraries(versionData.libraries);
 		
 		

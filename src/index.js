@@ -17,7 +17,7 @@ const fs   = require('fs');
 
 const { Windows, closeAll } = load('windows');
 const { taskDownloads }     = load('httpSeries');
-const CheckJava             = load('checkJava');
+const Java                  = load('java');
 const Minecraft             = load('minecraft');
 const MinecraftCore         = load('minecraft-core');
 const MinecraftFabric       = load('minecraft-fabric');
@@ -91,7 +91,7 @@ function main()
 		
 		try
 		{
-			minecraft = new Minecraft(path.resolve(message[0].name));
+			minecraft = new Minecraft(path.resolve('game', message[0].name));
 			minecraft.launcherName(app.getName());
 			minecraft.launcherVersion(app.getVersion());
 			minecraft.version(message[0].version);
@@ -115,18 +115,36 @@ function main()
 			}
 			
 			
-			const checkJava = new CheckJava();
-			await checkJava.checkJavaVersion(minecraft);
+			const java = new Java(minecraft, mainWindows, path.resolve('java'));
+			await java.setup();
 			
-			
-			if (message[0].downloads) {
+			if (message[0].downloads)
+			{
 				const extraFiles = [];
+				const isCachePath = (cachePath) => {
+					const filename = cachePath.split('/')[0];
+					
+					if (filename.toLowerCase().endsWith('.jar')) {
+						return cachePath;
+					}
+					
+					if (filename === 'resourcepacks') {
+						return cachePath;
+					}
+					
+					if (filename === 'shaderpacks') {
+						return cachePath;
+					}
+					
+					return null;
+				};
 				
 				for (const download of message[0].downloads) {
 					extraFiles.push({
 						'url': download.url,
 						'time':download.time,
-						'path': minecraft.getRootDir(download.path)
+						'path': minecraft.getRootDir(download.path),
+						'cachePath': isCachePath(download.path),
 					});
 				}
 				

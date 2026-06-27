@@ -102,6 +102,7 @@ module.exports = class
 						downloads.push({
 							'url': native.url,
 							'path': this.minecraft.getLibrariesDir(native.path),
+							'cachePath': path.posix.join("libraries", native.path),
 						});
 						
 						natives.push(native.path);
@@ -118,6 +119,7 @@ module.exports = class
 					downloads.push({
 						'url': artifact.url,
 						'path': this.minecraft.getLibrariesDir(artifact.path),
+						'cachePath': path.posix.join("libraries", artifact.path),
 					});
 					
 					libraries.push(artifact.path);
@@ -137,8 +139,9 @@ module.exports = class
 		for (const [key, value] of Object.entries(objects))
 		{
 			const hashPrefix = value.hash.slice(0, 2);
-			let assetsUrl = `https://resources.download.minecraft.net/${hashPrefix}/${value.hash}`;
-			let assetsPath = this.minecraft.getAssetsDir('objects', path.posix.join(hashPrefix, value.hash));
+			let Url = `https://resources.download.minecraft.net/${hashPrefix}/${value.hash}`;
+			let Path = this.minecraft.getAssetsDir('objects', hashPrefix, value.hash);
+			let cachePath = path.posix.join('assets', 'objects', hashPrefix, value.hash);
 			
 			
 			if (this.minecraft.versionCompare('1.7.2', '<=')) {
@@ -146,15 +149,16 @@ module.exports = class
 			}
 			
 			data.push({
-				'url': assetsUrl,
-				'path': assetsPath,
+				'url': Url,
+				'path': Path,
+				'cachePath': cachePath,
 			});
 		}
 		
 		return data;
 	}
 	
-	getFileJson(FilePath) {
+	readFileJson(FilePath) {
 		return JSON.parse(fs.readFileSync(FilePath, 'utf8'));
 	}
 	
@@ -296,33 +300,47 @@ module.exports = class
 	
 	async setup(task)
 	{
-		if (!fs.existsSync(this.minecraft.getVersionJsonPath()))
+		const versionJsonPath = path.posix.join('versions', this.minecraft.version(), this.minecraft.version() + '.json');
+		const versionJsonJar  = path.posix.join('versions', this.minecraft.version(), this.minecraft.version() + '.jar' );
+		
+		if (!fs.existsSync(this.minecraft.getRootDir(versionJsonPath)))
 		{
-			let versionList;
-			let version;
+			const versionsUrl = {
+				'url': 'https://launchermeta.mojang.com/mc/game/version_manifest.json',
+				'title': '获取版本清单',
+				'failure': '获取版本清单失败',
+			};
+			const versionList = await taskDownload(task, versionsUrl);
+			const version = versionList.versions.find(v => v.id === this.minecraft.version());
 			
-			await taskDownload(task, 'https://launchermeta.mojang.com/mc/game/version_manifest.json', '获取版本清单', '获取版本清单失败', async (f) => {
-				versionList = f.dataToJson();
-				version = versionList.versions.find(v => v.id === this.minecraft.version());
-			});
-			
-			if (version) {
-				await taskDownload(task, version.url, '获取版本元数据', '获取版本元数据失败', f => f.saveToFile(this.minecraft.getVersionJsonPath()));
+			if (!version) {
+				throw('未找到指定版本的元数据');
 			}
-			else throw('未找到指定版本的元数据');
+			
+			const versionUrl = {
+				'url': version.url,
+				'path': this.minecraft.getRootDir(versionJsonPath),
+				'cachePath': versionJsonPath,
+				'title': '获取版本元数据',
+				'failure': '获取版本元数据失败',
+			};
+			await taskDownload(task, versionUrl);
 		}
 		
-		const versionData = this.getFileJson(this.minecraft.getVersionJsonPath());
+		const versionData = this.readFileJson(this.minecraft.getRootDir(versionJsonPath));
 		const assetsJsonPath = this.minecraft.getAssetsDir('indexes', versionData.assetIndex.id + '.json');
+		const assetsCachePath = path.posix.join('assets', 'indexes', versionData.assetIndex.id + '.json');
+		const assetsUrl = {
+			'url': versionData.assetIndex.url,
+			'path': assetsJsonPath,
+			'cachePath': assetsCachePath,
+			'title': '获取资源清单文件',
+			'failure': '获取资源清单文件失败',
+		};
+		await taskDownload(task, assetsUrl);
 		
-		if (!fs.existsSync(assetsJsonPath)) {
-			await taskDownload(task, versionData.assetIndex.url, '获取资源清单文件', '获取资源清单文件失败', f => f.saveToFile(assetsJsonPath));
-		}
-		
-		const assetsData = this.getFileJson(assetsJsonPath);
+		const assetsData = this.readFileJson(assetsJsonPath);
 		const assets = this.getAssets(assetsData.objects);
-		
-		
 		const { downloads, libraries, natives } = this.getLibraries(versionData.libraries);		
 		
 		
@@ -333,12 +351,16 @@ module.exports = class
 		this.setAssetIndex(versionData.assetIndex.id);
 		this.setArguments(versionData.arguments ?? versionData.minecraftArguments);
 		
-		if (!fs.existsSync(this.minecraft.getVersionJarPath())) {
-			await taskDownload(task, versionData.downloads.client.url, '下载我的世界主程序', '下载我的世界主程序失败', f => f.saveToFile(this.minecraft.getVersionJarPath()));
-		}
 		
-		
-		await taskDownloadAssets(task, assets, '下载资源文件');
+		const mainUrl = {
+			'url': versionData.downloads.client.url,
+			'path': this.minecraft.getRootDir(versionJsonJar),
+			'cachePath': versionJsonJar,
+			'title': '下载我的世界主程序',
+			'failure': '下载我的世界主程序失败',
+		};
+		await taskDownload(task, mainUrl);
+		await taskDownloads(task, assets, '下载资源文件', 'html/task_download_assets.html');
 		await taskDownloads(task, downloads, '下载依赖库');
     }
 }
